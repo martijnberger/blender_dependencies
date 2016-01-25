@@ -24,15 +24,6 @@ set(DEFAULT_C_FLAGS
  -DCMAKE_C_FLAGS_RELWITHDEBINFO="/MT /Zi /O2 /Ob1 /D NDEBUG"
  )
 
-  
-.########.##.......####.########.
-......##..##........##..##.....##
-.....##...##........##..##.....##
-....##....##........##..########.
-...##.....##........##..##.....##
-..##......##........##..##.....##
-.########.########.####.########.
- 
 set(ZLIB_VERSION 1.2.8)    
 set(ZLIB_URI http://zlib.net/zlib-${ZLIB_VERSION}.tar.gz)
  
@@ -42,15 +33,6 @@ ExternalProject_Add(external_zlib
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/zlib ${DEFAULT_C_FLAGS}
   INSTALL_DIR ${LIBDIR}/zlib
 )
-
-
-.########..##....##..######..
-.##.....##.###...##.##....##.
-.##.....##.####..##.##.......
-.########..##.##.##.##...####
-.##........##..####.##....##.
-.##........##...###.##....##.
-.##........##....##..######..
 
 set(PNG_VERSION 1.6.21)
 set(PNG_URI  http://prdownloads.sourceforge.net/libpng/libpng-${PNG_VERSION}.tar.gz)
@@ -71,14 +53,6 @@ ExternalProject_Add(external_png
 
 add_dependencies(external_png external_zlib)
 
-.......##.########..########..######..
-.......##.##.....##.##.......##....##.
-.......##.##.....##.##.......##.......
-.......##.########..######...##...####
-.##....##.##........##.......##....##.
-.##....##.##........##.......##....##.
-..######..##........########..######..
-
 set(JPEG_VERSION 1.4.2)
 set(JPEG_URI https://github.com/libjpeg-turbo/libjpeg-turbo/archive/${JPEG_VERSION}.tar.gz)
 set(JPEG_HASH f9804884c1c41eb7f4febb9353a2cb27)
@@ -91,3 +65,28 @@ ExternalProject_Add(external_jpeg
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/jpg ${DEFAULT_C_FLAGS} ${JPEG_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/jpg
 )
+
+set(BOOST_VERSION 1.60.0)
+set(BOOST_VERSION_NODOTS 1_60_0)
+set(BOOST_URI http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION_NODOTS}.tar.bz2/download)
+set(BOOST_MD5 65a840e1a0b13a558ff19eeb2c4f0cbe)
+set(BOOST_OPTIONS --with-filesystem
+				  --with-locale
+				  --with-thread
+				  --with-regex
+				  --with-system
+				  --with-date_time
+				  --with-wave)
+
+ExternalProject_Add(external_boost
+  URL ${BOOST_URI}
+  URL_HASH MD5=${BOOST_MD5}
+  UPDATE_COMMAND  ""
+  CONFIGURE_COMMAND bootstrap.bat
+  BUILD_COMMAND bjam -j4 architecture=x86 address-model=64 variant=release link=static runtime-link=static threading=multi ${BOOST_OPTIONS}  --prefix=${LIBDIR}/boost install
+  BUILD_IN_SOURCE 1
+  INSTALL_COMMAND ""
+)
+
+
+
