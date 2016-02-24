@@ -105,3 +105,21 @@ ExternalProject_Add(external_blosc
   INSTALL_DIR ${LIBDIR}/blosc
 )
 
+set(PTHREADS_VERSION 2-9-1)
+set(PTHREADS_URI ftp://sourceware.org/pub/pthreads-win32/pthreads-w32-${PTHREADS_VERSION}-release.tar.gz)
+set(PTHREADS_SHA512 9c06e85310766834370c3dceb83faafd397da18a32411ca7645c8eb6b9495fea54ca2872f4a3e8d83cb5fdc5dea7f3f0464be5bb9af3222a6534574a184bd551 )
+set(PTHREADS_BUILD cd ${CMAKE_CURRENT_BINARY_DIR}/build/pthreads/src/external_pthreads/ && cd  && nmake VC /e XCFLAGS=/MD /e XLIBS=/NODEFAULTLIB:msvcr )
+
+ExternalProject_Add(external_pthreads
+  URL ${PTHREADS_URI}
+  URL_HASH SHA512=${PTHREADS_SHA512}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/pthreads
+  CONFIGURE_COMMAND echo .
+  BUILD_COMMAND ${PTHREADS_BUILD}
+  INSTALL_COMMAND COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/pthreads/src/external_pthreads/pthreadVC2.dll ${LIBDIR}/pthreads/lib/pthreadVC2.dll && 
+					      ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/pthreads/src/external_pthreads/pthreadVC2.lib ${LIBDIR}/pthreads/lib/pthreadVC2.lib &&		
+						  ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/pthreads/src/external_pthreads/pthread.h ${LIBDIR}/pthreads/inc/pthread.h		     && 
+						  ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/pthreads/src/external_pthreads/sched.h ${LIBDIR}/pthreads/inc/sched.h               &&
+						  ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/pthreads/src/external_pthreads/semaphore.h ${LIBDIR}/pthreads/inc/semaphore.h		 
+  INSTALL_DIR ${LIBDIR}/pthreads
+)
