@@ -33,7 +33,7 @@ include(ExternalProject)
 #jack                  # Prob   # Last Supported msvc is 6.0                                       #
 #jpeg                  # Done   #                                                                  #
 #lapack                # Prob   # Needs the intel compiler or mingw to build                       #
-#llvm                  # Work   #                                                                  #
+#llvm                  # Work   # Compiles, patch not applied yet                                  #
 #openal                # Prob   # Download is a creepy .exe file, swap out with openal-soft?       #
 #opencollada           # Work   # Compiles, need to check old build procedure for cmake defs and patches #
 #OpenColorIO           # Done   # Requires patch.exe to be in the path, also requires latest cmake because the findboost in older cmake's do not recognize 1.6.0                            #
@@ -408,26 +408,32 @@ ExternalProject_Add(external_opencolorio
 
 set(LLVM_VERSION 3.4.2)
 set(LLVM_URI http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.gz)
-set(LLVM_HASH xxx)
+set(LLVM_HASH a20669f75967440de949ac3b1bad439c)
 set(LLVM_EXTRA_ARGS 
+ -DLLVM_USE_CRT_RELEASE=MT 
+ -DLLVM_INCLUDE_TESTS=OFF 
+ -DLLVM_TARGETS_TO_BUILD=X86
+ -DLLVM_INCLUDE_EXAMPLES=OFF
    )
 
 ExternalProject_Add(external_llvm
   URL ${LLVM_URI}
-#  URL_HASH MD5=${LLVM_HASH}
+  URL_HASH MD5=${LLVM_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/llvm
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/llvm ${DEFAULT_C_FLAGS} ${LLVM_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/llvm
 )
 
 set(CLANG_URI http://llvm.org/releases/${LLVM_VERSION}/cfe-${LLVM_VERSION}.src.tar.gz)
-set(CLANG_HASH xxx)
+set(CLANG_HASH 87945973b7c73038871c5f849a818588)
 set(CLANG_EXTRA_ARGS 
+   -DCLANG_PATH_TO_LLVM_SOURCE=${CMAKE_CURRENT_BINARY_DIR}/build/llvm/src/external_llvm
+   -DCLANG_PATH_TO_LLVM_BUILD=${LIBDIR}/llvm
    )
 ExternalProject_Add(external_clang
   URL ${CLANG_URI}
-#  URL_HASH MD5=${CLANG_HASH}
-  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/llvm
+  URL_HASH MD5=${CLANG_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/clang
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/llvm ${DEFAULT_C_FLAGS} ${CLANG_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/llvm
 )
