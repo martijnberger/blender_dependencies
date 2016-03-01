@@ -1,5 +1,5 @@
 project("Blender External Dependencies")
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 include(ExternalProject)
 
@@ -20,11 +20,16 @@ include(ExternalProject)
 # ????        # No idea what to do with this                                                       #
 # Tested      # Linked against blender and working                                                 #
 ####################################################################################################
+# TODO                                                                                             #
+####################################################################################################
+# - Dependencies between projects                                                                  #
+# - Apply patches to projects                                                                      #
+####################################################################################################
 #Dependency            # Status # Notes                                                            #
 ####################################################################################################
 #alembic               # Work   # Build issues with finding libs, needs work                       #
 #blosc                 # Done   #                                                                  #
-#boost                 # Done   #                                                                  #
+#boost                 # Work   # Keeps building for vc140 :(                                      #
 #ffmpeg                # Prob   # No nmake or cmake based build in the main distro                 #
 #fftw3                 # Prob   # No nmake or cmake based build in the main distro                 #
 #freetype              # Done   #                                                                  #
@@ -39,10 +44,10 @@ include(ExternalProject)
 #OpenColorIO           # Done   # Requires patch.exe to be in the path, also requires latest cmake because the findboost in older cmake's do not recognize 1.6.0                            #
 #openexr               # Done   # Split into IlmBase & OpenExr                                     #
 #opengl                #        # Contains freeglut & glew                                         #
-#OpenImageIO           #        #                                                                  #
+#OpenImageIO           # Done   #                                                                  #
 #opensubdiv            #        #                                                                  #
 #openvdb               #        #                                                                  #
-#osl                   #        #                                                                  #
+#osl                   # Work   #                                                                  #
 #package               # ????   # Has a bunch of python stuff                                      #
 #png                   # Done   #                                                                  #
 #pthreads              # Done   #                                                                  #
@@ -52,7 +57,7 @@ include(ExternalProject)
 #sndfile               # Prob   # No nmake or cmake based build in the main distro                 #
 #tbb                   #        #                                                                  #
 #thumbhandler          #        #                                                                  #
-#tiff                  #        #                                                                  #
+#tiff                  # Done   #                                                                  #
 #wintab                # ????   # Just a bunch of header files, nothing to build                   #
 #zlib                  # Done   # library file is named differently compared to what is in svn     #
 ####################################################################################################
@@ -77,6 +82,7 @@ set(DEFAULT_C_FLAGS
  -DCMAKE_C_FLAGS_RELEASE="/MT /O2 /Ob2 /D NDEBUG"
  -DCMAKE_C_FLAGS_RELWITHDEBINFO="/MT /Zi /O2 /Ob1 /D NDEBUG"
  )
+
 
 set(ZLIB_VERSION 1.2.8)    
 set(ZLIB_URI http://zlib.net/zlib-${ZLIB_VERSION}.tar.gz)
@@ -120,6 +126,14 @@ ExternalProject_Add(external_jpeg
   INSTALL_DIR ${LIBDIR}/jpg
 )
 
+
+if (MSVC12)
+	set(VCVER 12)
+elseif (MSVC15)
+	set(VCVER 15)
+endif()
+
+
 set(BOOST_VERSION 1.60.0)
 set(BOOST_VERSION_NODOTS 1_60_0)
 set(BOOST_URI http://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/boost_${BOOST_VERSION_NODOTS}.tar.bz2/download)
@@ -130,14 +144,18 @@ set(BOOST_OPTIONS --with-filesystem
                   --with-regex
                   --with-system
                   --with-date_time
-                  --with-wave)
+                  --with-wave
+				  --with-atomic
+				  --with-serialization
+				  toolset=msvc-${VCVER}.0)
+string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
 
 ExternalProject_Add(external_boost
   URL ${BOOST_URI}
   URL_HASH MD5=${BOOST_MD5}
   UPDATE_COMMAND  ""
   CONFIGURE_COMMAND bootstrap.bat
-  BUILD_COMMAND bjam -j4 architecture=x86 address-model=64 variant=release link=static runtime-link=static threading=multi ${BOOST_OPTIONS}  --prefix=${LIBDIR}/boost install
+  BUILD_COMMAND bjam -j4 architecture=x86 address-model=64 variant=${BOOST_BUILD_TYPE} link=static runtime-link=static threading=multi ${BOOST_OPTIONS}  --prefix=${LIBDIR}/boost install
   BUILD_IN_SOURCE 1
   INSTALL_COMMAND ""
 )
@@ -158,6 +176,7 @@ ExternalProject_Add(external_blosc
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/blosc ${DEFAULT_C_FLAGS} ${BLOSC_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/blosc
 )
+add_dependencies(external_blosc external_zlib)
 
 set(PTHREADS_VERSION 2-9-1)
 set(PTHREADS_URI ftp://sourceware.org/pub/pthreads-win32/pthreads-w32-${PTHREADS_VERSION}-release.tar.gz)
@@ -188,7 +207,7 @@ ExternalProject_Add(external_ilmbase
   URL_HASH MD5=${ILMBASE_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/ilmbase
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/ilmbase ${DEFAULT_C_FLAGS} ${ILMBASE_EXTRA_ARGS}
-  INSTALL_DIR ${LIBDIR}/ilmbase
+  INSTALL_DIR ${LIBDIR}/openexr
 )
 
 set(OPENEXR_VERSION 2.2.0)
@@ -258,13 +277,13 @@ set(HDF_EXTRA_ARGS
  -DZLIB_INCLUDE_DIR=${LIBDIR}/zlib/include/
 )
 
-ExternalProject_Add(external_hdf5
-  URL ${HDF_URI}
-  URL_HASH MD5=${HDF_HASH}
-  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/hdf5
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/hdf5 ${DEFAULT_C_FLAGS} ${HDF_EXTRA_ARGS}
-  INSTALL_DIR ${LIBDIR}/hdf5
-)
+#ExternalProject_Add(external_hdf5
+#  URL ${HDF_URI}
+#  URL_HASH MD5=${HDF_HASH}
+#  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/hdf5
+#  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/hdf5 ${DEFAULT_C_FLAGS} ${HDF_EXTRA_ARGS}
+  #INSTALL_DIR ${LIBDIR}/hdf5
+#)
 
 
 
@@ -406,6 +425,8 @@ ExternalProject_Add(external_opencolorio
   INSTALL_DIR ${LIBDIR}/opencolorio
 )
 
+add_dependencies(external_opencolorio external_boost)
+
 set(LLVM_VERSION 3.4.2)
 set(LLVM_URI http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.tar.gz)
 set(LLVM_HASH a20669f75967440de949ac3b1bad439c)
@@ -429,6 +450,7 @@ set(CLANG_HASH 87945973b7c73038871c5f849a818588)
 set(CLANG_EXTRA_ARGS 
    -DCLANG_PATH_TO_LLVM_SOURCE=${CMAKE_CURRENT_BINARY_DIR}/build/llvm/src/external_llvm
    -DCLANG_PATH_TO_LLVM_BUILD=${LIBDIR}/llvm
+   -DLLVM_USE_CRT_RELEASE=MT
    )
 ExternalProject_Add(external_clang
   URL ${CLANG_URI}
@@ -437,7 +459,154 @@ ExternalProject_Add(external_clang
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/llvm ${DEFAULT_C_FLAGS} ${CLANG_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/llvm
 )
+add_dependencies(external_clang external_llvm)
 
+set(OPENIMAGEIO_VERSION 1.6.9)
+set(OPENIMAGEIO_URI https://github.com/OpenImageIO/oiio/archive/Release-${OPENIMAGEIO_VERSION}.zip)
+set(OPENIMAGEIO_HASH c0ec61c3e79ddc65a6239ea938ce2cda)
+set(OPENIMAGEIO_EXTRA_ARGS 
+    -DILMBASE_PACKAGE_PREFIX=${LIBDIR}/openexr/
+	-DILMBASE_INCLUDE_DIR=${LIBDIR}/openexr/include/ 
+    -DILMBASE_HALF_LIBRARIES=${LIBDIR}/openexr/lib/Half.lib 
+    -DILMBASE_IMATH_LIBRARIES=${LIBDIR}/openexr/lib/Imath-2_2.lib 
+    -DILMBASE_ILMTHREAD_LIBRARIES=${LIBDIR}/openexr/lib/IlmThread-2_2.lib 
+    -DILMBASE_IEX_LIBRARIES=${LIBDIR}/openexr/lib/Iex-2_2.lib 
+	-DOPENEXR_INCLUDE_DIR=${LIBDIR}/openexr/include/openexr/ 
+	-DOPENEXR_ILMIMF_LIBRARIES=${LIBDIR}/openexr/lib/IlmImf-2_2.lib
+	-DBoost_COMPILER:STRING=-vc120
+	-DBoost_USE_MULTITHREADED=ON 
+	-DBoost_USE_STATIC_LIBS=ON 
+	-DBoost_USE_STATIC_RUNTIME=ON 
+	-DBOOST_ROOT=${LIBDIR}/boost 
+	-DBOOST_LIBRARYDIR=${LIBDIR}/boost/lib/
+	-DBUILDSTATIC=ON 
+	-DLINKSTATIC=ON 
+	-OIIO_BUILD_CPP11=ON 
+	-DUSE_OPENGL=OFF 
+	-DUSE_TBB=OFF 
+	-DUSE_FIELD3D=OFF 
+	-DUSE_QT=OFF 
+	-DUSE_PYTHON=OFF 
+	-DOIIO_BUILD_TOOLS=OFF 
+	-DOIIO_BUILD_TESTS=OFF 
+	-DBUILD_TESTING=OFF 
+	-DZLIB_LIBRARY=${LIBDIR}/zlib/lib/zlib_static.lib 
+	-DZLIB_INCLUDE_DIR=${LIBDIR}/zlib/include 
+	-DPNG_LIBRARY=${LIBDIR}/png/lib/libpng.lib 
+	-DPNG_PNG_INCLUDE_DIR=${LIBDIR}/png/include 
+	-DTIFF_LIBRARY=${LIBDIR}/tiff/lib/tiff.lib 
+	-DTIFF_INCLUDE_DIR=${LIBDIR}/tiff/include 
+	-DJPEG_LIBRARY=${LIBDIR}/jpg/lib/libjpeg.lib 
+	-DJPEG_INCLUDE_DIR=${LIBDIR}/jpg/include
+	-DOCIO_PATH=${LIBDIR}/opencolorio/
+	-DOPENEXR_HOME=${LIBDIR}/openexr/
+	-DILMBASE_PACKAGE_PREFIX=${LIBDIR}/ilmbase/
+	-DILMBASE_INCLUDE_DIR=${LIBDIR}/ilmbase/include/ 
+    -DILMBASE_HALF_LIBRARIES=${LIBDIR}/ilmbase/lib/Half.lib 
+    -DILMBASE_IMATH_LIBRARIES=${LIBDIR}/ilmbase/lib/Imath-2_2.lib 
+    -DILMBASE_ILMTHREAD_LIBRARIES=${LIBDIR}/ilmbase/lib/IlmThread-2_2.lib 
+    -DILMBASE_IEX_LIBRARIES=${LIBDIR}/ilmbase/lib/Iex-2_2.lib 
+	-DOPENEXR_INCLUDE_DIR=${LIBDIR}/openexr/include/ 
+	-DOPENEXR_ILMIMF_LIBRARIES=${LIBDIR}/openexr/lib/IlmImf-2_2.lib
+)
+
+ExternalProject_Add(external_openimageio
+  URL ${OPENIMAGEIO_URI}
+  URL_HASH MD5=${OPENIMAGEIO_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/openimageio
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/openimageio ${DEFAULT_C_FLAGS} ${OPENIMAGEIO_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/openimageio
+)
+add_dependencies(external_openimageio external_png external_zlib external_ilmbase external_openexr external_jpeg external_boost external_tiff  )
+
+
+set(TIFF_VERSION 4.0.6)
+set(TIFF_URI http://download.osgeo.org/libtiff/tiff-${TIFF_VERSION}.tar.gz)
+set(TIFF_HASH d1d2e940dea0b5ad435f21f03d96dd72)
+set(TIFF_EXTRA_ARGS 
+	 -DZLIB_LIBRARY=${LIBDIR}/zlib/lib/zlibstatic.lib 
+	 -DZLIB_INCLUDE_DIR=${LIBDIR}/zlib/include 
+	 -DPNG_STATIC=ON 
+	 -DBUILD_SHARED_LIBS=OFF
+   )
+
+ExternalProject_Add(external_tiff
+  URL ${TIFF_URI}
+  URL_HASH MD5=${TIFF_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/tiff
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/tiff ${DEFAULT_C_FLAGS} ${TIFF_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/tiff
+)
+
+
+set(FLEXBISON_VERSION 2.5.5)
+set(FLEXBISON_URI http://prdownloads.sourceforge.net/winflexbison//win_flex_bison-2.5.5.zip)
+set(FLEXBISON_HASH d87a3938194520d904013abef3df10ce)
+set(FLEXBISON_EXTRA_ARGS 
+   )
+
+ExternalProject_Add(external_flexbison
+  URL ${FLEXBISON_URI}
+  URL_HASH MD5=${FLEXBISON_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/flexbison
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/flexbison ${DEFAULT_C_FLAGS} ${FLEXBISON_EXTRA_ARGS}
+  CONFIGURE_COMMAND echo .
+  BUILD_COMMAND echo . 
+  INSTALL_COMMAND COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/build/flexbison/src/external_flexbison/ ${LIBDIR}/flexbison/ 
+  INSTALL_DIR ${LIBDIR}/flexbison
+)
+
+set(OSL_VERSION 1.7.1)
+set(OSL_URI https://github.com/imageworks/OpenShadingLanguage/archive/Release-${OSL_VERSION}.zip)
+set(OSL_HASH 0cd09f4d736f33baa4ec566f5ba527f0)
+set(OSL_EXTRA_ARGS 
+    -DILMBASE_PACKAGE_PREFIX=${LIBDIR}/ilmbase/
+	-DILMBASE_INCLUDE_DIR=${LIBDIR}/ilmbase/include/ 
+    -DILMBASE_HALF_LIBRARIES=${LIBDIR}/ilmbase/lib/Half.lib 
+    -DILMBASE_IMATH_LIBRARIES=${LIBDIR}/ilmbase/lib/Imath-2_2.lib 
+    -DILMBASE_ILMTHREAD_LIBRARIES=${LIBDIR}/ilmbase/lib/IlmThread-2_2.lib 
+    -DILMBASE_IEX_LIBRARIES=${LIBDIR}/ilmbase/lib/Iex-2_2.lib 
+	-DOPENEXR_INCLUDE_DIR=${LIBDIR}/openexr/include/ 
+	-DOPENEXR_ILMIMF_LIBRARIES=${LIBDIR}/openexr/lib/IlmImf-2_2.lib
+	-DBoost_COMPILER:STRING=-vc120
+	-DBoost_USE_MULTITHREADED=ON 
+	-DBoost_USE_STATIC_LIBS=ON 
+	-DBoost_USE_STATIC_RUNTIME=ON 
+	-DBOOST_ROOT=${LIBDIR}/boost 
+	-DBOOST_LIBRARYDIR=${LIBDIR}/boost/lib/
+	-DLLVM_DIRECTORY=${LIBDIR}/llvm 
+	-DLLVM_INCLUDES=${LIBDIR}/llvm/include 
+	-DLLVM_LIB_DIR=${LIBDIR}/llvm/lib 
+	-DLLVM_VERSION=3.4 
+	-DLLVM_LIBRARY=${LIBDIR}/llvm/lib/LLVMAnalysis.lib;${LIBDIR}/llvm/lib/LLVMAsmParser.lib;${LIBDIR}/llvm/lib/LLVMAsmPrinter.lib;${LIBDIR}/llvm/lib/LLVMBitReader.lib;${LIBDIR}/llvm/lib/LLVMBitWriter.lib;${LIBDIR}/llvm/lib/LLVMCodeGen.lib;${LIBDIR}/llvm/lib/LLVMCore.lib;${LIBDIR}/llvm/lib/LLVMDebugInfo.lib;${LIBDIR}/llvm/lib/LLVMExecutionEngine.lib;${LIBDIR}/llvm/lib/LLVMInstCombine.lib;${LIBDIR}/llvm/lib/LLVMInstrumentation.lib;${LIBDIR}/llvm/lib/LLVMInterpreter.lib;${LIBDIR}/llvm/lib/LLVMJIT.lib;${LIBDIR}/llvm/lib/LLVMLinker.lib;${LIBDIR}/llvm/lib/LLVMMC.lib;${LIBDIR}/llvm/lib/LLVMMCDisassembler.lib;${LIBDIR}/llvm/lib/LLVMMCJIT.lib;${LIBDIR}/llvm/lib/LLVMMCParser.lib;${LIBDIR}/llvm/lib/LLVMObject.lib;${LIBDIR}/llvm/lib/LLVMRuntimeDyld.lib;${LIBDIR}/llvm/lib/LLVMScalarOpts.lib;${LIBDIR}/llvm/lib/LLVMSelectionDAG.lib;${LIBDIR}/llvm/lib/LLVMSupport.lib;${LIBDIR}/llvm/lib/LLVMTableGen.lib;${LIBDIR}/llvm/lib/LLVMTarget.lib;${LIBDIR}/llvm/lib/LLVMTransformUtils.lib;${LIBDIR}/llvm/lib/LLVMVectorize.lib;${LIBDIR}/llvm/lib/LLVMX86AsmParser.lib;${LIBDIR}/llvm/lib/LLVMX86AsmPrinter.lib;${LIBDIR}/llvm/lib/LLVMX86CodeGen.lib;${LIBDIR}/llvm/lib/LLVMX86Desc.lib;${LIBDIR}/llvm/lib/LLVMX86Disassembler.lib;${LIBDIR}/llvm/lib/LLVMX86Info.lib;${LIBDIR}/llvm/lib/LLVMX86Utils.lib;${LIBDIR}/llvm/lib/LLVMipa.lib;${LIBDIR}/llvm/lib/LLVMipo.lib
+	-DILMBASE_HOME=${LIBDIR}/openexr 
+	-DILMBASE_VERSION=2_2 
+	-USE_SIMD=sse2  
+	-OSL_BUILD_TESTS=OFF 
+    -DZLIB_LIBRARY=${LIBDIR}/zlib/lib/zlibstatic.lib
+    -DZLIB_INCLUDE_DIR=${LIBDIR}/zlib/include/
+    -DOPENIMAGEIOHOME=${LIBDIR}/OpenImageIO 
+    -DOPENIMAGEIO_LIBRARY=${LIBDIR}/openimageio/lib/OpenImageIO_Util.lib;${LIBDIR}/openimageio/lib/OpenImageIO.lib;${LIBDIR}/png/lib/libpng.lib;${LIBDIR}/jpeg/lib/libjpeg.lib;${LIBDIR}/tiff/lib/libtiff.lib;${LIBDIR}/openexr/lib/Half.lib;${LIBDIR}/openexr/lib/Imath-2_2.lib;${LIBDIR}/openexr/lib/IlmImf-2_2.lib;${LIBDIR}/openexr/lib/Iex-2_2.lib;${LIBDIR}/openexr/lib/IlmThread-2_2.lib
+    -DFLEX_EXECUTABLE=${LIBDIR}/flexbison/win_flex.exe 
+	-DFLEX_EXTRA_OPTIONS=--wincompat
+    -DBISON_EXECUTABLE=${LIBDIR}/flexbison/win_bison.exe 
+	-DCMAKE_CXX_FLAGS_DEBUG=${CMAKE_CXX_FLAGS_DEBUG}
+	-DCMAKE_CXX_FLAGS_MINSIZEREL=${CMAKE_CXX_FLAGS_MINSIZEREL}
+	-DCMAKE_CXX_FLAGS=/DOIIO_STATIC_BUILD;${CMAKE_CXX_FLAGS}
+	-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=${CMAKE_CXX_FLAGS_RELWITHDEBINFO}
+	-DCMAKE_CXX_FLAGS=/MT;${CMAKE_CXX_FLAGS}
+)  
+set(CMAKE_CXX_FLAGS "/DOIIO_STATIC_BUILD ${CMAKE_CXX_FLAGS}") 
+
+ExternalProject_Add(external_osl
+  URL ${OSL_URI}
+  URL_HASH MD5=${OSL_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/osl
+  PATCH_COMMAND cd ${CMAKE_CURRENT_BINARY_DIR}/build/osl/src/external_osl/src/cmake/ && patch < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/osl_171.diff 
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/osl -DCMAKE_CXX_FLAGS="/DOIIO_STATIC_BUILD" ${DEFAULT_C_FLAGS} ${OSL_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/osl
+)
+add_dependencies(external_osl external_boost external_llvm external_clang external_ilmbase external_openexr external_zlib external_flexbison)
 
 
 
