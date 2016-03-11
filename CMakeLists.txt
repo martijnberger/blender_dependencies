@@ -473,7 +473,7 @@ set(SDL_VERSION 2.0.4)
 set(SDL_URI https://www.libsdl.org/release/SDL2-${SDL_VERSION}.tar.gz)
 set(SDL_HASH 44fc4a023349933e7f5d7a582f7b886e ) 
 set(SDL_EXTRA_ARGS  
-
+	-DSDL_STATIC=Off
 )
 
 ExternalProject_Add(external_sdl
@@ -488,6 +488,7 @@ ExternalProject_Add(external_sdl
 set(OPENCOLLADA_GIT_URI https://github.com/KhronosGroup/OpenCOLLADA.git)
 set(OPENCOLLADA_GIT_UID 3335ac164e68b2512a40914b14c74db260e6ff7d ) 
 set(OPENCOLLADA_EXTRA_ARGS  
+
 )
 
 ExternalProject_Add(external_opencollada
