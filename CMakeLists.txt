@@ -30,9 +30,9 @@ include(ExternalProject)
 #############################################################################################################
 #Dependency            # VC12   # VC14   # Notes                                                            #
 #############################################################################################################
-#alembic               # Work   #        # Last release has a dep on hdf5, maybe just use latest from git?  #
-#blosc                 # Work   # Done   # Keeps building with /MD even when you tell it you want /MT       #
-#boost                 # Done   #        #	                                                                #
+#alembic               # Done   # Done   # Used latest from git                                             #
+#blosc                 # Work   # Work   # Keeps building with /MD even when you tell it you want /MT       #
+#boost                 # Done   # Done   #	                                                                #
 #ffmpeg                # Prob   #        # No nmake or cmake based build in the main distro                 #
 #fftw3                 # Prob   #        # No nmake or cmake based build in the main distro                 #
 #freetype              # Done   # Done   #                                                                  #
@@ -45,9 +45,10 @@ include(ExternalProject)
 #opencollada           # Done   # Done   #                                                                  #
 #OpenColorIO           # Done   # Done   # Requires patch.exe to be in the path, also requires latest cmake because the findboost in older cmake's do not recognize 1.6.0                            #
 #openexr               # Done   # Done   # Split into IlmBase & OpenExr                                     #
-#opengl                #        #        # Contains freeglut & glew                                         #
+#opengl                # ????   #        # Contains freeglut & glew                                         #
+#glew                  # Done   # Done   # dep of the opengl folder, and opensubdiv                         #
 #OpenImageIO           # Done   # Done   #                                                                  #
-#opensubdiv            #        #        #                                                                  #
+#opensubdiv            # Work   # Work   # Done, but missing the opencl and cuda bits                       #
 #openvdb               #        #        #                                                                  #
 #osl                   # Done   # Done   #                                                                  #
 #package               # ????   #        # Has a bunch of python stuff                                      #
@@ -354,28 +355,27 @@ set(FFMPEG_EXTRA_ARGS  )
 #  INSTALL_DIR ${LIBDIR}/ffmpeg
 #)
 
-set(HDF_VERSION 1.8.16)
-set(HDF_URI http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-${HDF_VERSION}.tar.bz2)
-set(HDF_HASH 79c1593573ebddf734eee8d43ecfe483 ) 
-set(HDF_EXTRA_ARGS  
- -DZLIB_LIBRARY=${LIBDIR}/zlib/lib/zlibstatic.lib
- -DZLIB_INCLUDE_DIR=${LIBDIR}/zlib/include/
+set(GLEW_VERSION 1.13.0)
+set(GLEW_URI http://prdownloads.sourceforge.net/glew/glew/${GLEW_VERSION}/glew-${GLEW_VERSION}.tgz )
+set(GLEW_HASH 7cbada3166d2aadfc4169c4283701066 ) 
+set(GLEW_EXTRA_ARGS  
+	-DBUILD_UTILS=Off
+	-DBUILD_SHARED_LIBS=Off
 )
 
-#ExternalProject_Add(external_hdf5
-#  URL ${HDF_URI}
-#  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
-#  URL_HASH MD5=${HDF_HASH}
-#  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/hdf5
-#  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/hdf5 ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${HDF_EXTRA_ARGS}
-#  INSTALL_DIR ${LIBDIR}/hdf5
-#)
+ExternalProject_Add(external_glew
+  URL ${GLEW_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${GLEW_HASH}
+  PATCH_COMMAND COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/diffs/cmakelists_glew.txt  ${CMAKE_CURRENT_BINARY_DIR}/build/glew/src/external_glew/cmakelists.txt 
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/glew
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/glew ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${GLEW_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/glew
+)
 
 
-
-set(ALEMBIC_VERSION 1.5.8)
-set(ALEMBIC_URI https://github.com/alembic/alembic/archive/${ALEMBIC_VERSION}.tar.gz)
-set(ALEMBIC_HASH a70ba5f2e80b47d346d15d797c28731a) 
+set(ALEMBIC_GIT_URI https://github.com/alembic/alembic.git )
+set(ALEMBIC_GIT_UID 16f4ed6843f2b39d08c02338e0747f4dbcf8be20 ) 
 set(ALEMBIC_EXTRA_ARGS  
  -DBUILDSTATIC=ON 
  -DLINKSTATIC=ON 
@@ -392,33 +392,53 @@ set(ALEMBIC_EXTRA_ARGS
  -DALEMBIC_ILMBASE_IEX_LIB=${LIBDIR}/ilmbase/lib/Iex-2_2.lib 
  -DUSE_PYILMBASE=0 
  -DUSE_PYALEMBIC=0
- -DHDF5_ROOT=${LIBDIR}/hdf5
- -DHDF5_INCLUDE_DIR=${LIBDIR}/include
- -DHDF_INCLUDE_DIR=${LIBDIR}/include
  -DUSE_ARNOLD=0 
  -DUSE_MAYA=0
  -DUSE_PRMAN=0
- -DBUILD_EXAMPLES=0 
+ -DUSE_HDF5=Off
+ -DUSE_TESTS=Off
  -DALEMBIC_NO_OPENGL=1 
- -DBUILD_SHARED_LIBS=OFF 
+ -DALEMBIC_ILMBASE_LINK_STATIC=On
+ -DALEMBIC_SHARED_LIBS=OFF 
  -DGLUT_INCLUDE_DIR="" 
  -DZLIB_LIBRARY=${LIBDIR}/zlib/lib/zlibstatic.lib
  -DZLIB_INCLUDE_DIR=${LIBDIR}/zlib/include/
- -DBUILD_STATIC_LIBS=1
- -DBUILD_TESTING=0
- -DALEMBIC_NO_TEST=1
- -DHDF5_USE_STATIC_LIBRARIES=On
  )
 
-#ExternalProject_Add(external_alembic
-#  URL ${ALEMBIC_URI}
-#  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
-#  URL_HASH MD5=${ALEMBIC_HASH}
-#  #CONFIGURE_COMMAND set HDF5_DIR=${LIBDIR}/hdf5/
-#  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/alembic
-#  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/alembic -Wno-dev ${DEFAULT_C_FLAGS} ${ALEMBIC_EXTRA_ARGS}
-#  INSTALL_DIR ${LIBDIR}/alembic
-#)
+ExternalProject_Add(external_alembic
+  GIT_REPOSITORY ${ALEMBIC_GIT_URI}
+  GIT_TAG ${ALEMBIC_GIT_UID}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/alembic
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/alembic -Wno-dev ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${ALEMBIC_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/alembic
+)
+
+set(OPENSUBDIV_GIT_URI https://github.com/PixarAnimationStudios/OpenSubdiv.git )
+set(OPENSUBDIV_GIT_UID cf7135eb2a77d7907192fb3be4da7caa1e708f96 ) 
+set(OPENSUBDIV_EXTRA_ARGS  
+    -DNO_EXAMPLES=ON 
+    -DNO_REGRESSION=ON 
+    -DNO_PYTHON=ON 
+    -DNO_MAYA=ON 
+    -DNO_PTEX=ON 
+    -DNO_DOC=ON 
+    -DNO_CUDA=ON 
+    -DNO_OPENCL=ON 
+    -DNO_TUTORIALS=ON 
+	-DGLEW_INCLUDE_DIR=${LIBDIR}/glew/include
+	-DGLEW_LIBRARY=${LIBDIR}/glew/lib/libglew.lib
+	-DCMAKE_EXE_LINKER_FLAGS_RELEASE=libcmt.lib 
+)
+
+ExternalProject_Add(external_opensubdiv
+  GIT_REPOSITORY ${OPENSUBDIV_GIT_URI}
+  GIT_TAG ${OPENSUBDIV_GIT_UID}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/opensubdiv
+  PATCH_COMMAND patch --verbose -p 1 -d ${CMAKE_CURRENT_BINARY_DIR}/build/opensubdiv/src/external_opensubdiv < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/opensubdiv.diff 
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/opensubdiv -Wno-dev ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${OPENSUBDIV_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/opensubdiv
+)
+
 
 set(ICONV_VERSION 1.14)
 set(ICONV_URI http://ftp.gnu.org/pub/gnu/libiconv/libiconv-${ICONV_VERSION}.tar.gz)
