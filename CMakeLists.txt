@@ -31,7 +31,7 @@ include(ExternalProject)
 #Dependency            # VC12   # VC14   # Notes                                                            #
 #############################################################################################################
 #alembic               # Done   # Done   # Used latest from git                                             #
-#blosc                 # Work   # Work   # Keeps building with /MD even when you tell it you want /MT       #
+#blosc                 # Done   # Done   #                                                                  #
 #boost                 # Done   # Done   #	                                                                #
 #ffmpeg                # Prob   #        # No nmake or cmake based build in the main distro                 #
 #fftw3                 # Prob   #        # No nmake or cmake based build in the main distro                 #
@@ -232,7 +232,7 @@ ExternalProject_Add(external_blosc
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   LIST_SEPARATOR ^^
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/blosc
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/blosc ${BLOSC_EXTRA_ARGS}
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/blosc  ${DEFAULT_C_FLAGS}  ${DEFAULT_CXX_FLAGS}  ${BLOSC_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/blosc
 )
 add_dependencies(external_blosc external_zlib)
