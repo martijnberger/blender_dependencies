@@ -40,16 +40,16 @@ include(ExternalProject)
 #jack                  # Prob   #        # Last Supported msvc is 6.0                                       #
 #jpeg                  # Done   # Done   #                                                                  #
 #lapack                # Prob   #        # Needs the intel compiler or mingw to build                       #
-#llvm                  # Work   # Prob   # Compiles, patch not applied yet, clang has issues with vc14      #
-#openal                # Prob   #        # Download is a creepy .exe file, swap out with openal-soft?       #
+#llvm                  # Work   # Work   # Compiles, llvm patch patch not applied yet.                      #
+#openal                # Done   # Done   # Uses openal-soft, unsure what the old libs were                  #
 #opencollada           # Done   # Done   #                                                                  #
-#OpenColorIO           # Done   # Done   # Requires patch.exe to be in the path, also requires latest cmake because the findboost in older cmake's do not recognize 1.6.0                            #
+#OpenColorIO           # Done   # Done   # requires latest cmake because the findboost in older cmake's do not recognize 1.6.0                            #
 #openexr               # Done   # Done   # Split into IlmBase & OpenExr                                     #
 #opengl                # ????   #        # Contains freeglut & glew                                         #
 #glew                  # Done   # Done   # dep of the opengl folder, and opensubdiv                         #
 #OpenImageIO           # Done   # Done   #                                                                  #
 #opensubdiv            # Work   # Work   # Done, but missing the opencl and cuda bits                       #
-#openvdb               #        #        #                                                                  #
+#openvdb               # Done   # Done   #                                                                  #
 #osl                   # Done   # Done   #                                                                  #
 #package               # ????   #        # Has a bunch of python stuff                                      #
 #png                   # Done   # Done   #                                                                  #
@@ -58,8 +58,8 @@ include(ExternalProject)
 #release               # ????   #        # Installer scripts                                                # 
 #sdl                   # Done   # Done   #                                                                  #
 #sndfile               # Prob   #        # No nmake or cmake based build in the main distro                 #
-#tbb                   #        #        #                                                                  #
-#thumbhandler          #        #        #                                                                  #
+#tbb                   # Done   # Done   #                                                                  #
+#thumbhandler          # ????   # ????   # Not sure what this is                                            #
 #tiff                  # Done   # Done   #                                                                  #
 #wintab                # ????   #        # Just a bunch of header files, nothing to build                   #
 #zlib                  # Done   # Done   # library file is named differently compared to what is in svn     #
@@ -116,19 +116,27 @@ ExternalProject_Add(external_zlib
   INSTALL_DIR ${LIBDIR}/zlib
 )
 
-set(OPENAL_URI  https://www.openal.org/downloads/OpenAL11CoreSDK.zip)
-set(OPENAL_HASH 03c234c964bfd86bc30edb6d1cabb753)
+set(OPENAL_VERSION 1.17.2)
+set(OPENAL_URI  http://kcat.strangesoft.net/openal-releases/openal-soft-${OPENAL_VERSION}.tar.bz2)
+set(OPENAL_HASH 1764e0d8fec499589b47ebc724e0913d)
 set(OPENAL_EXTRA_ARGS 
+	-DALSOFT_UTILS=Off
+	-DALSOFT_NO_CONFIG_UTIL=On
+	-DALSOFT_EXAMPLES=Off
+	-DALSOFT_TESTS=Off
+	-DALSOFT_CONFIG=Off
+	-DALSOFT_HRTF_DEFS=Off
+	-DALSOFT_INSTALL=On
 )
 
-#ExternalProject_Add(external_openal
-#  URL ${OPENAL_URI}
-#  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
-#  URL_HASH MD5=${OPENAL_HASH}
-#  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/openal
-#  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/openal ${DEFAULT_C_FLAGS} ${PNG_EXTRA_ARGS}
-#  INSTALL_DIR ${LIBDIR}/openal
-#)
+ExternalProject_Add(external_openal
+  URL ${OPENAL_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${OPENAL_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/openal
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/openal ${DEFAULT_C_FLAGS} ${OPENAL_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/openal
+)
 
 set(PNG_VERSION 1.6.21)
 set(PNG_URI  http://prdownloads.sourceforge.net/libpng/libpng-${PNG_VERSION}.tar.gz)
@@ -791,6 +799,64 @@ set(SNDFILE_EXTRA_ARGS
 #  INSTALL_DIR ${LIBDIR}/sndfile
 #)
 
+set(TBB_VERSION 44_20160128)
+set(TBB_URI https://www.threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb${TBB_VERSION}oss_src_0.tgz )
+set(TBB_HASH 9d8a4cdf43496f1b3f7c473a5248e5cc)
+set(TBB_EXTRA_ARGS 
+	-DTBB_BUILD_SHARED=Off
+	-DTBB_BUILD_TBBMALLOC=Off
+	-DTBB_BUILD_TBBMALLOC_PROXY=Off
+	-DTBB_BUILD_STATIC=On
+   )
 
+#Cmake script for tbb from https://github.com/wjakob/tbb/blob/master/CMakeLists.txt
+ExternalProject_Add(external_tbb
+  URL ${TBB_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${TBB_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/tbb
+  PATCH_COMMAND COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/diffs/cmakelists_tbb.txt  ${CMAKE_CURRENT_BINARY_DIR}/build/tbb/src/external_tbb/cmakelists.txt &&  
+						${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/tbb/src/external_tbb/build/vs2010/version_string.ver ${CMAKE_CURRENT_BINARY_DIR}/build/tbb/src/external_tbb/src/tbb/version_string.ver
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/tbb ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${TBB_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/tbb
+)
+
+
+set(OPENVDB_VERSION 3_1_0)
+set(OPENVDB_URI http://www.openvdb.org/download/openvdb_${OPENVDB_VERSION}_library.zip )
+set(OPENVDB_HASH 0e25a2e183c46963899ab3f77e3533ac)
+set(OPENVDB_EXTRA_ARGS 
+	-DOPENEXR_HOME=${LIBDIR}/openexr/
+	-DILMBASE_INCLUDE_DIR=${LIBDIR}/ilmbase/include/
+    -DILMBASE_HALF_LIBRARIES=${LIBDIR}/ilmbase/lib/Half.lib 
+    -DILMBASE_IMATH_LIBRARIES=${LIBDIR}/ilmbase/lib/Imath-2_2.lib 
+    -DILMBASE_ILMTHREAD_LIBRARIES=${LIBDIR}/ilmbase/lib/IlmThread-2_2.lib 
+    -DILMBASE_IEX_LIBRARIES=${LIBDIR}/ilmbase/lib/Iex-2_2.lib 
+	-DOPENEXR_INCLUDE_DIR=${LIBDIR}/openexr/include/ 
+	-DOPENEXR_ILMIMF_LIBRARIES=${LIBDIR}/openexr/lib/IlmImf-2_2.lib 
+	-DTBB_ROOT_DIR=${LIBDIR}/tbb/
+	-DTBB_LIBRARY=${LIBDIR}/tbb/lib/tbb_static.lib
+	-DBoost_COMPILER:STRING=${BOOST_COMPILER_STRING}
+	-DBoost_USE_MULTITHREADED=ON 
+	-DBoost_USE_STATIC_LIBS=ON 
+	-DBoost_USE_STATIC_RUNTIME=ON 
+	-DBOOST_ROOT=${LIBDIR}/boost 
+    -DZLIB_LIBRARY=${LIBDIR}/zlib/lib/zlibstatic.lib
+	-DZLIB_INCLUDE_DIR=${LIBDIR}/zlib/include/
+
+   )
+
+#cmake script for openvdb based on https://raw.githubusercontent.com/diekev/openvdb-cmake/master/CMakeLists.txt
+#can't be in external_openvdb because of how the includes are setup. 
+ExternalProject_Add(openvdb
+  URL ${OPENVDB_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${OPENVDB_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/openvdb
+  PATCH_COMMAND COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/diffs/cmakelists_openvdb.txt  ${CMAKE_CURRENT_BINARY_DIR}/build/openvdb/src/openvdb/cmakelists.txt &&
+						${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/diffs/cmake/  ${CMAKE_CURRENT_BINARY_DIR}/build/openvdb/src/openvdb/cmake/
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/openvdb ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${OPENVDB_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/openvdb
+)
 
 
