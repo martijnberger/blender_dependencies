@@ -2,7 +2,7 @@ project("Blender External Dependencies")
 cmake_minimum_required(VERSION 3.5)
 
 include(ExternalProject)
-
+OPTION(ENABLE_MINGW64 "Enable building of ffmpeg/iconv/libsndfile/lapack/fftw3 by installing mingw64" ON)
 ####################################################################################################
 #
 # USAGE:
@@ -33,19 +33,20 @@ include(ExternalProject)
 #alembic               # Done   # Done   # Used latest from git                                             #
 #blosc                 # Done   # Done   #                                                                  #
 #boost                 # Done   # Done   #	                                                                #
-#ffmpeg                # Prob   #        # No nmake or cmake based build in the main distro                 #
-#fftw3                 # Prob   #        # No nmake or cmake based build in the main distro                 #
+#ffmpeg                # Done   # Done   # Build with mingw64                                               #
+#fftw3                 # Done   # Done   # Build with mingw64                                               #
 #freetype              # Done   # Done   #                                                                  #
-#iconv                 # Prob   #        # needs mingw to build                                             #
-#jack                  # Prob   #        # Last Supported msvc is 6.0                                       #
+#iconv                 # Done   # Done   # Build with mingw64                                               #
+#jack                  # Prob   # Prob   # Last Supported msvc is 6.0                                       #
 #jpeg                  # Done   # Done   #                                                                  #
-#lapack                # Prob   #        # Needs the intel compiler or mingw to build                       #
+#lapack                # Done   # Done   # Needs the intel compiler or mingw to build                       #
 #llvm                  # Work   # Work   # Compiles, llvm patch patch not applied yet.                      #
 #openal                # Done   # Done   # Uses openal-soft, unsure what the old libs were                  #
 #opencollada           # Done   # Done   #                                                                  #
 #OpenColorIO           # Done   # Done   # requires latest cmake because the findboost in older cmake's do not recognize 1.6.0                            #
 #openexr               # Done   # Done   # Split into IlmBase & OpenExr                                     #
-#opengl                # ????   #        # Contains freeglut & glew                                         #
+#opengl                # Done   # Done   # Split into feeglut & glew                                        #
+#Freeglut              # Done   # Done   # dep of the opengl folder                                         #
 #glew                  # Done   # Done   # dep of the opengl folder, and opensubdiv                         #
 #OpenImageIO           # Done   # Done   #                                                                  #
 #opensubdiv            # Work   # Work   # Done, but missing the opencl and cuda bits                       #
@@ -57,7 +58,7 @@ include(ExternalProject)
 #python                # ????   #        # Skip? Unsure why                                                 #
 #release               # ????   #        # Installer scripts                                                # 
 #sdl                   # Done   # Done   #                                                                  #
-#sndfile               # Prob   #        # No nmake or cmake based build in the main distro                 #
+#sndfile               # Done   # Done   # build with mingw64                                               #
 #tbb                   # Done   # Done   #                                                                  #
 #thumbhandler          # ????   # ????   # Not sure what this is                                            #
 #tiff                  # Done   # Done   #                                                                  #
@@ -335,34 +336,6 @@ ExternalProject_Add(external_freetype
   INSTALL_DIR ${LIBDIR}/freetype
 )
 
-set(FFTW_VERSION 3.3.4)
-set(FFTW_URI http://www.fftw.org/fftw-${FFTW_VERSION}.tar.gz)
-set(FFTW_HASH 2edab8c06b24feeb3b82bbb3ebf3e7b3)
-set(FFTW_EXTRA_ARGS  )
-
-#ExternalProject_Add(external_fftw3
-#  URL ${FFTW_URI}
-#  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
-#  URL_HASH MD5=${FFTW_HASH}
-#  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/fftw3
-#  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/fftw3 ${DEFAULT_C_FLAGS} ${FFTW_EXTRA_ARGS}
-#  INSTALL_DIR ${LIBDIR}/fftw3
-#)
-
-set(FFMPEG_VERSION 3.0)
-set(FFMPEG_URI http://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.bz2)
-set(FFMPEG_HASH 026859cc76dddffd809cad879db07658)
-set(FFMPEG_EXTRA_ARGS  )
-
-#ExternalProject_Add(external_ffmpeg
-#  URL ${FFMPEG_URI}
-#  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
-#  URL_HASH MD5=${FFMPEG_HASH}
-#  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg
-#  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/ffmpeg ${DEFAULT_C_FLAGS} ${FFMPEG_EXTRA_ARGS}
-#  INSTALL_DIR ${LIBDIR}/ffmpeg
-#)
-
 set(GLEW_VERSION 1.13.0)
 set(GLEW_URI http://prdownloads.sourceforge.net/glew/glew/${GLEW_VERSION}/glew-${GLEW_VERSION}.tgz )
 set(GLEW_HASH 7cbada3166d2aadfc4169c4283701066 ) 
@@ -379,6 +352,23 @@ ExternalProject_Add(external_glew
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/glew
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/glew ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${GLEW_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/glew
+)
+
+set(FREEGLUT_VERSION 3.0.0)
+set(FREEGLUT_URI http://pilotfiber.dl.sourceforge.net/project/freeglut/freeglut/${FREEGLUT_VERSION}/freeglut-${FREEGLUT_VERSION}.tar.gz )
+set(FREEGLUT_HASH 90c3ca4dd9d51cf32276bc5344ec9754 ) 
+set(FREEGLUT_EXTRA_ARGS  
+	-DFREEGLUT_BUILD_SHARED_LIBS=Off
+	-DFREEGLUT_BUILD_STATIC_LIBS=On
+)
+
+ExternalProject_Add(external_freeglut
+  URL ${FREEGLUT_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${FREEGLUT_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/freeglut
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/freeglut ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${GLEW_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/freeglut
 )
 
 
@@ -447,54 +437,20 @@ ExternalProject_Add(external_opensubdiv
   INSTALL_DIR ${LIBDIR}/opensubdiv
 )
 
-
-set(ICONV_VERSION 1.14)
-set(ICONV_URI http://ftp.gnu.org/pub/gnu/libiconv/libiconv-${ICONV_VERSION}.tar.gz)
-set(ICONV_HASH e34509b1623cec449dfeb73d7ce9c6c6 ) 
-set(ICONV_EXTRA_ARGS  
- 
-)
-
-#ExternalProject_Add(external_iconv
-#  URL ${ICONV_URI}
-#  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
-#  URL_HASH MD5=${ICONV_HASH}
-#  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/iconv
-#  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/iconv ${DEFAULT_C_FLAGS} ${ICONV_EXTRA_ARGS}
-#  INSTALL_DIR ${LIBDIR}/iconv
+#set(JACK_URI https://codeload.github.com/jackaudio/jack2/zip/ad5ddf6c2bbd64a254b4cc78de9114c10633da24?.zip)
+#set(JACK_HASH 6a317d0df2bd95fc696b9fbca6608568 ) 
+#set(JACK_EXTRA_ARGS  
+#
 #)
-
-
-
-set(JACK_URI https://dl.dropboxusercontent.com/u/28869550/jack-1.9.10.tar.bz2)
-set(JACK_HASH 4aeb91d7ae0cabce98355436ed4f217a ) 
-set(JACK_EXTRA_ARGS  
- 
-)
 
 #ExternalProject_Add(external_jack
 #  URL ${JACK_URI}
 #  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
 #  URL_HASH MD5=${JACK_HASH}
 #  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/jack
-#  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/jack ${DEFAULT_C_FLAGS} ${ICONV_EXTRA_ARGS}
+#  PATCH_COMMAND COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/diffs/cmakelists_jack.txt  ${CMAKE_CURRENT_BINARY_DIR}/build/jack/src/external_jack/cmakelists.txt
+#  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/jack ${DEFAULT_C_FLAGS} ${JACK_EXTRA_ARGS}
 #  INSTALL_DIR ${LIBDIR}/jack
-#)
-
-set(LAPACK_VERSION 3.6.0)
-set(LAPACK_URI http://www.netlib.org/lapack/lapack-${LAPACK_VERSION}.tgz)
-set(LAPACK_HASH f2f6c67134e851fe189bb3ca1fbb5101 ) 
-set(LAPACK_EXTRA_ARGS  
- 
-)
-
-#ExternalProject_Add(external_lapack
-#  URL ${LAPACK_URI}
-#  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
-#  URL_HASH MD5=${LAPACK_HASH}
-#  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/lapack
-#  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/lapack ${DEFAULT_C_FLAGS} ${LAPACK_EXTRA_ARGS}
-#  INSTALL_DIR ${LIBDIR}/lapack
 #)
 
 set(SDL_VERSION 2.0.4)
@@ -784,20 +740,7 @@ set(PYTHON_EXTRA_ARGS
 #  INSTALL_DIR ${LIBDIR}/python
 #)
 
-set(SNDFILE_VERSION 1.0.26)
-set(SNDFILE_URI http://www.mega-nerd.com/libsndfile/files/libsndfile-${SNDFILE_VERSION}.tar.gz)
-set(SNDFILE_HASH ec810a0c60c08772a8a5552704b63393)
-set(SNDFILE_EXTRA_ARGS 
-   )
 
-#ExternalProject_Add(external_sndfile
-#  URL ${SNDFILE_URI}
-#  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
-#  URL_HASH MD5=${SNDFILE_HASH}
-#  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/sndfile
-#  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/sndfile ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${SNDFILE_EXTRA_ARGS}
-#  INSTALL_DIR ${LIBDIR}/sndfile
-#)
 
 set(TBB_VERSION 44_20160128)
 set(TBB_URI https://www.threadingbuildingblocks.org/sites/default/files/software_releases/source/tbb${TBB_VERSION}oss_src_0.tgz )
@@ -858,5 +801,187 @@ ExternalProject_Add(openvdb
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/openvdb ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${OPENVDB_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/openvdb
 )
+if (ENABLE_MINGW64)
+####################################################################################################################
+# Mingw64 Builds
+####################################################################################################################
+# This installs mingw64+msys to compile ffmpeg/iconv/libsndfile/lapack/fftw3
+####################################################################################################################
+
+message("LIBDIR = ${LIBDIR}")
+macro(cmake_to_msys_path MsysPath ResultingPath)
+  string(REPLACE ":" "" TmpPath "${MsysPath}" )
+  string(SUBSTRING ${TmpPath} 0 1 Drive)
+  string(SUBSTRING ${TmpPath} 1 255 PathPart)
+  string(TOLOWER ${Drive} LowerDrive)
+  string(CONCAT ${ResultingPath} "/" ${LowerDrive} ${PathPart} )
+endmacro()
+cmake_to_msys_path(${LIBDIR} mingw_LIBDIR)
+message("mingw_LIBDIR = ${mingw_LIBDIR}")
+
+#download ming64
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/x86_64-w64-mingw32-gcc-4.8.0-win64_rubenvb.7z")
+	Message("Downloading mingw64")
+	file(DOWNLOAD "http://heanet.dl.sourceforge.net/project/mingw-w64/Toolchains%20targetting%20Win64/Personal%20Builds/rubenvb/gcc-4.8-release/x86_64-w64-mingw32-gcc-4.8.0-win64_rubenvb.7z" "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/x86_64-w64-mingw32-gcc-4.8.0-win64_rubenvb.7z") 
+endif()
+
+#make mingw root directory
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw")
+    EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/mingw
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+endif()
+
+#extract mingw64
+if ( (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/mingw64env.cmd") AND (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/x86_64-w64-mingw32-gcc-4.8.0-win64_rubenvb.7z") )
+	Message("Extracting mingw64")
+    EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} -E tar jxf ${CMAKE_CURRENT_SOURCE_DIR}/Downloads/x86_64-w64-mingw32-gcc-4.8.0-win64_rubenvb.7z
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mingw
+    )
+endif()
+
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip")
+	Message("Downloading mingw-get")
+    file(DOWNLOAD "http://heanet.dl.sourceforge.net/project/mingw/Installer/mingw-get/mingw-get-0.6.2-beta-20131004-1/mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip" "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip")
+endif()
+ 
+#extract mingw_get
+if ( (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/mingw-get.exe") AND (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip") )
+    Message("Extracting mingw-get")
+	EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} -E tar jxf "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/
+    )
+endif()
+
+if ( (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/mingw-get.exe") AND (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/msys/1.0/bin/make.exe") )
+	Message("Installing MSYS")
+	EXECUTE_PROCESS(
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/mingw-get install msys 
+        WORKING_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/
+    )
+endif()
+
+#download old core_utils for pr.exe (ffmpeg needs it to build)
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/coreutils-5.97-MSYS-1.0.11-snapshot.tar.bz2")
+	Message("Downloading CoreUtils 5.97")
+	file(DOWNLOAD "http://heanet.dl.sourceforge.net/project/mingw/MSYS/Base/msys-core/_obsolete/coreutils-5.97-MSYS-1.0.11-2/coreutils-5.97-MSYS-1.0.11-snapshot.tar.bz2" "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/coreutils-5.97-MSYS-1.0.11-snapshot.tar.bz2") 
+endif()
+
+if ( (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/coreutils-5.97-MSYS-1.0.11-snapshot.tar.bz2") AND (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/msys/1.0/bin/pr.exe") )
+	Message("Installing pr from CoreUtils 5.97")
+    EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/tmp_coreutils
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
+    EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} -E tar jxf ${CMAKE_CURRENT_SOURCE_DIR}/Downloads/coreutils-5.97-MSYS-1.0.11-snapshot.tar.bz2
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tmp_coreutils/
+    )
+
+    EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/tmp_coreutils/coreutils-5.97/bin/pr.exe "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/msys/1.0/bin/pr.exe"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/tmp_coreutils/
+    )
+endif()
+
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/mingw64sh.cmd") 
+	Message("Installing ming64sh.cmd")
+	EXECUTE_PROCESS(
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/diffs/ming64sh.cmd  ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/ming64sh.cmd 
+    )
+endif()
 
 
+set(FFMPEG_VERSION 3.0)
+set(FFMPEG_URI http://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.bz2)
+set(FFMPEG_HASH 026859cc76dddffd809cad879db07658)
+set(FFMPEG_EXTRA_ARGS  )
+
+ExternalProject_Add(external_ffmpeg
+  URL ${FFMPEG_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${FFMPEG_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg/src/external_ffmpeg/ && sh ./configure --enable-static --prefix=${mingw_LIBDIR}/ffmpeg
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg/src/external_ffmpeg/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg/src/external_ffmpeg/ && make install
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/ffmpeg ${DEFAULT_C_FLAGS} ${FFMPEG_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/ffmpeg
+)
+
+set(FFTW_VERSION 3.3.4)
+set(FFTW_URI http://www.fftw.org/fftw-${FFTW_VERSION}.tar.gz)
+set(FFTW_HASH 2edab8c06b24feeb3b82bbb3ebf3e7b3)
+set(FFTW_EXTRA_ARGS  )
+
+ExternalProject_Add(external_fftw3
+  URL ${FFTW_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${FFTW_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/fftw3
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/fftw3/src/external_fftw3/ && sh ./configure --enable-static --prefix=${mingw_LIBDIR}/fftw3
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/fftw3/src/external_fftw3/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/fftw3/src/external_fftw3/ && make install
+  INSTALL_DIR ${LIBDIR}/fftw3
+)
+
+set(ICONV_VERSION 1.14)
+set(ICONV_URI http://ftp.gnu.org/pub/gnu/libiconv/libiconv-${ICONV_VERSION}.tar.gz)
+set(ICONV_HASH e34509b1623cec449dfeb73d7ce9c6c6 ) 
+set(ICONV_EXTRA_ARGS  
+ 
+)
+
+ExternalProject_Add(external_iconv
+  URL ${ICONV_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${ICONV_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/iconv
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/iconv/src/external_iconv/ && sh ./configure --enable-static --prefix=${mingw_LIBDIR}/iconv
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/iconv/src/external_iconv/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/iconv/src/external_iconv/ && make install
+  INSTALL_DIR ${LIBDIR}/iconv
+)
+
+
+set(LAPACK_VERSION 3.6.0)
+set(LAPACK_URI http://www.netlib.org/lapack/lapack-${LAPACK_VERSION}.tgz)
+set(LAPACK_HASH f2f6c67134e851fe189bb3ca1fbb5101 ) 
+set(LAPACK_EXTRA_ARGS  
+ 
+)
+
+ExternalProject_Add(external_lapack
+  URL ${LAPACK_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${LAPACK_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/lapack
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/lapack/src/external_lapack/ && ${CMAKE_COMMAND} -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX=${LIBDIR}/lapack . 
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/lapack/src/external_lapack/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/lapack/src/external_lapack/ && make install
+
+  INSTALL_DIR ${LIBDIR}/lapack
+)
+
+set(SNDFILE_VERSION 1.0.26)
+set(SNDFILE_URI http://www.mega-nerd.com/libsndfile/files/libsndfile-${SNDFILE_VERSION}.tar.gz)
+set(SNDFILE_HASH ec810a0c60c08772a8a5552704b63393)
+set(SNDFILE_EXTRA_ARGS 
+   )
+
+ExternalProject_Add(external_sndfile
+  URL ${SNDFILE_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${SNDFILE_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/sndfile
+  CONFIGURE_COMMAND  cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/sndfile/src/external_sndfile/ && sh ./configure --enable-static --prefix=${mingw_LIBDIR}/sndfile
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/sndfile/src/external_sndfile/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/sndfile/src/external_sndfile/ && make install
+  INSTALL_DIR ${LIBDIR}/sndfile
+)
+
+endif(ENABLE_MINGW64)
