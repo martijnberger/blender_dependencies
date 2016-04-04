@@ -6,14 +6,12 @@ OPTION(ENABLE_MINGW64 "Enable building of ffmpeg/iconv/libsndfile/lapack/fftw3 b
 ####################################################################################################
 #
 # USAGE:
-#   for now this is intended to be used with cmake and msbuild
-#   cmake -G "Visual Studio 12 Win64" / 
-#   cmake -G "Visual Studio 14 Win64" 
-#   msbuild ALL_BUILD.vcxproj /p:Configuration=Release
+#   Don't call this cmake file your self, use the build_deps batch file
+#   build_deps 2013 or
+#   build_deps 2015 
 #
-# Requires patch.exe in the path (mingw's patch will do)
+#   Note this currently only builds 64 bit versions of the dependencies, 32 bit is not supported or tested
 #
-#   the builds should also inherit any platformtoolset you might give them
 ####################################################################################################
 # Status code # Description                                                                        #
 ####################################################################################################
@@ -21,6 +19,8 @@ OPTION(ENABLE_MINGW64 "Enable building of ffmpeg/iconv/libsndfile/lapack/fftw3 b
 # Done        # Done, Compiles without errors, not tested with blender yet                         #
 # Prob        # There's a problem                                                                  #
 # ????        # No idea what to do with this                                                       #
+# Links       # Blender Compiles and links in release mode                                         #
+# NoTest      # no clue how to test,component seems not referenced in default build?               #
 # Tested      # Linked against blender and working                                                 #
 ####################################################################################################
 # TODO                                                                                             #
@@ -31,57 +31,62 @@ OPTION(ENABLE_MINGW64 "Enable building of ffmpeg/iconv/libsndfile/lapack/fftw3 b
 #Dependency            # VC12   # VC14   # Notes                                                            #
 #############################################################################################################
 #alembic               # Done   # Done   # Used latest from git                                             #
-#blosc                 # Done   # Done   #                                                                  #
-#boost                 # Done   # Done   #	                                                                #
-#ffmpeg                # Done   # Done   # Build with mingw64                                               #
-#fftw3                 # Done   # Done   # Build with mingw64                                               #
-#freetype              # Done   # Done   #                                                                  #
-#iconv                 # Done   # Done   # Build with mingw64                                               #
+#blosc                 # Links  # Done   #                                                                  #
+#boost                 # Links  # Done   #	                                                                #
+#ffmpeg                # Links  # Done   # Build with mingw64, not as feature complete as in svn            #
+#fftw3                 # Links  # Done   # Build with mingw64                                               #
+#freetype              # Links  # Done   #                                                                  #
+#iconv                 # NoTest # Done   # Build with mingw64                                               #
 #jack                  # Prob   # Prob   # Last Supported msvc is 6.0                                       #
-#jpeg                  # Done   # Done   #                                                                  #
-#lapack                # Done   # Done   # Needs the intel compiler or mingw to build                       #
-#llvm                  # Work   # Work   # Compiles, llvm patch patch not applied yet.                      #
-#openal                # Done   # Done   # Uses openal-soft, unsure what the old libs were                  #
-#opencollada           # Done   # Done   #                                                                  #
-#OpenColorIO           # Done   # Done   # requires latest cmake because the findboost in older cmake's do not recognize 1.6.0                            #
-#openexr               # Done   # Done   # Split into IlmBase & OpenExr                                     #
-#opengl                # Done   # Done   # Split into feeglut & glew                                        #
-#Freeglut              # Done   # Done   # dep of the opengl folder                                         #
-#glew                  # Done   # Done   # dep of the opengl folder, and opensubdiv                         #
-#OpenImageIO           # Done   # Done   #                                                                  #
-#opensubdiv            # Work   # Work   # Done, but missing the opencl and cuda bits                       #
-#openvdb               # Done   # Done   #                                                                  #
-#osl                   # Done   # Done   #                                                                  #
+#jpeg                  # Links  # Done   #                                                                  #
+#lapack                # NoTest # Done   # Needs the intel compiler or mingw to build                       #
+#llvm                  # Links  # Work   # Compiles, llvm patch patch not applied yet.                      #
+#openal                # Links  # Done   # Uses openal-soft, unsure what the old libs were                  #
+#opencollada           # Links  # Done   #                                                                  #
+#OpenColorIO           # Links  # Done   # requires cmake 3.5 to find boost 1.6.0                           #
+#openexr               # Links  # Done   # Split into IlmBase & OpenExr                                     #
+#opengl                # NoTest # Done   # Split into feeglut & glew                                        #
+#Freeglut              # NoTest # Done   # dep of the opengl folder                                         #
+#glew                  # NoTest # Done   # dep of the opengl folder, and opensubdiv                         #
+#OpenImageIO           # Links  # Done   #                                                                  #
+#opensubdiv            # Done   # Done   # Cuda Disabled for 2015 due to missing support                    #
+#cuew                  # Done   # Done   # Dep for opensubdiv                                               #
+#clew                  # Done   # Done   # Dep for opensubdiv                                               #
+#glfw                  # Done   # Done   # Dep for opensubdiv                                               #
+#openvdb               # Links  # Done   #                                                                  #
+#osl                   # Links  # Done   #                                                                  #
 #package               # ????   #        # Has a bunch of python stuff                                      #
-#png                   # Done   # Done   #                                                                  #
-#pthreads              # Done   # Done   #                                                                  #
+#png                   # Links  # Done   #                                                                  #
+#pthreads              # Links  # Done   #                                                                  #
 #python                # ????   #        # Skip? Unsure why                                                 #
 #release               # ????   #        # Installer scripts                                                # 
-#sdl                   # Done   # Done   #                                                                  #
-#sndfile               # Done   # Done   # build with mingw64                                               #
-#tbb                   # Done   # Done   #                                                                  #
+#sdl                   # Links  # Done   #                                                                  #
+#sndfile               # Links  # Done   # build with mingw64                                               #
+#tbb                   # Links  # Done   #                                                                  #
 #thumbhandler          # ????   # ????   # Not sure what this is                                            #
-#tiff                  # Done   # Done   #                                                                  #
+#tiff                  # Links  # Done   #                                                                  #
 #wintab                # ????   #        # Just a bunch of header files, nothing to build                   #
-#zlib                  # Done   # Done   # library file is named differently compared to what is in svn     #
+#zlib                  # Links  # Done   #                                                                  #
 #############################################################################################################
 
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release")
+if(NOT BUILD_MODE)
+    set(BUILD_MODE "Release")
     message(STATUS "Build type not specified: defaulting to a release build.")
 endif()
+Message("BuildMode = ${BUILD_MODE}")
+set(PATCH_CMD ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/msys/1.0/bin/patch.exe)
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+if (BUILD_MODE STREQUAL "Debug")
     set(LIBDIR ${CMAKE_CURRENT_BINARY_DIR}/Debug)
-ELSE(CMAKE_BUILD_TYPE STREQUAL "Debug")
+ELSE(BUILD_MODE STREQUAL "Debug")
     set(LIBDIR ${CMAKE_CURRENT_BINARY_DIR}/Release)
-ENDIF(CMAKE_BUILD_TYPE STREQUAL "Debug")
+ENDIF(BUILD_MODE STREQUAL "Debug")
 
 message("LIBDIR = ${LIBDIR}")
 
 # TODO FIXME highly MSVC specific
 
-set(BLEND_CMAKE_C_FLAGS_DEBUG "/MTd /Zi /Ob0 /Od /RTC1 /D_DEBUG")
+ set(BLEND_CMAKE_C_FLAGS_DEBUG "/MTd /Zi /Ob0 /Od /RTC1 /D_DEBUG")
  set(BLEND_C_FLAGS_MINSIZEREL "/MT /O1 /Ob1 /D NDEBUG")
  set(BLEND_C_FLAGS_RELEASE "/MT /O2 /Ob2 /DNDEBUG")
  set(BLEND_C_FLAGS_RELWITHDEBINFO "/MT /Zi /O2 /Ob1 /D NDEBUG")
@@ -105,18 +110,26 @@ set(DEFAULT_CXX_FLAGS
  -DCMAKE_CXX_FLAGS_RELWITHDEBINFO=${BLEND_C_FLAGS_RELWITHDEBINFO}
  )
 
-
 set(ZLIB_VERSION 1.2.8)    
 set(ZLIB_URI http://zlib.net/zlib-${ZLIB_VERSION}.tar.gz)
- 
+set(ZLIB_HASH 44d667c142d7cda120332623eab69f40)
 ExternalProject_Add(external_zlib
   URL ${ZLIB_URI}
+  URL_HASH MD5=${ZLIB_HASH}
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/zlib
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/zlib ${DEFAULT_C_FLAGS}
   INSTALL_DIR ${LIBDIR}/zlib
 )
 
+if (BUILD_MODE STREQUAL Debug)
+ ExternalProject_Add_Step(external_zlib after_install
+ COMMAND ${CMAKE_COMMAND} -E copy ${LIBDIR}/zlib/lib/zlibstaticd.lib  ${LIBDIR}/zlib/lib/zlibstatic.lib
+ DEPENDEES install
+ )
+endif (BUILD_MODE STREQUAL Debug)
+
+if (BUILD_MODE STREQUAL Release)
 set(OPENAL_VERSION 1.17.2)
 set(OPENAL_URI  http://kcat.strangesoft.net/openal-releases/openal-soft-${OPENAL_VERSION}.tar.bz2)
 set(OPENAL_HASH 1764e0d8fec499589b47ebc724e0913d)
@@ -138,6 +151,8 @@ ExternalProject_Add(external_openal
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/openal ${DEFAULT_C_FLAGS} ${OPENAL_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/openal
 )
+endif (BUILD_MODE STREQUAL Release)
+
 
 set(PNG_VERSION 1.6.21)
 set(PNG_URI  http://prdownloads.sourceforge.net/libpng/libpng-${PNG_VERSION}.tar.gz)
@@ -158,6 +173,14 @@ ExternalProject_Add(external_png
 )
 
 add_dependencies(external_png external_zlib)
+if (BUILD_MODE STREQUAL Debug)
+ExternalProject_Add_Step(external_png after_install
+ COMMAND ${CMAKE_COMMAND} -E copy ${LIBDIR}/png/lib/libpng16_staticd.lib  ${LIBDIR}/png/lib/libpng16.lib
+ DEPENDEES install
+ )
+endif (BUILD_MODE STREQUAL Debug)
+
+
 
 set(JPEG_VERSION 1.4.2)
 set(JPEG_URI https://github.com/libjpeg-turbo/libjpeg-turbo/archive/${JPEG_VERSION}.tar.gz)
@@ -172,6 +195,14 @@ ExternalProject_Add(external_jpeg
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/jpg ${DEFAULT_C_FLAGS} ${JPEG_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/jpg
 )
+add_dependencies(external_png external_zlib)
+if (BUILD_MODE STREQUAL Debug)
+ExternalProject_Add_Step(external_jpeg after_install
+ COMMAND ${CMAKE_COMMAND} -E copy ${LIBDIR}/jpg/lib/jpegd.lib  ${LIBDIR}/jpg/lib/jpeg.lib
+ DEPENDEES install
+ )
+endif (BUILD_MODE STREQUAL Debug)
+
 
 if (MSVC12)
 	set(VCVER 12)
@@ -199,7 +230,7 @@ set(BOOST_OPTIONS --with-filesystem
 				  --with-program_options
 				  --with-python
 				  toolset=msvc-${VCVER}.0)
-string(TOLOWER ${CMAKE_BUILD_TYPE} BOOST_BUILD_TYPE)
+string(TOLOWER ${BUILD_MODE} BOOST_BUILD_TYPE)
 
 ExternalProject_Add(external_boost
   URL ${BOOST_URI}
@@ -213,7 +244,7 @@ ExternalProject_Add(external_boost
   INSTALL_COMMAND ""
 )
 
-
+if (BUILD_MODE STREQUAL Release)
 set(BLOSC_VERSION 1.7.1)
 set(BLOSC_URI https://github.com/Blosc/c-blosc/archive/v${BLOSC_VERSION}.zip)
 #set(BLOSC_HASH f9804884c1c41eb7f4febb9353a2cb27)
@@ -237,7 +268,9 @@ ExternalProject_Add(external_blosc
   INSTALL_DIR ${LIBDIR}/blosc
 )
 add_dependencies(external_blosc external_zlib)
+endif (BUILD_MODE STREQUAL Release)
 
+if (BUILD_MODE STREQUAL Release)
 set(PTHREADS_VERSION 2-9-1)
 set(PTHREADS_URI ftp://sourceware.org/pub/pthreads-win32/pthreads-w32-${PTHREADS_VERSION}-release.tar.gz)
 set(PTHREADS_SHA512 9c06e85310766834370c3dceb83faafd397da18a32411ca7645c8eb6b9495fea54ca2872f4a3e8d83cb5fdc5dea7f3f0464be5bb9af3222a6534574a184bd551 )
@@ -255,6 +288,7 @@ ExternalProject_Add(external_pthreads
   URL_HASH SHA512=${PTHREADS_SHA512}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/pthreads
   CONFIGURE_COMMAND echo .
+  PATCH_COMMAND ${PATCH_CMD}  --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/pthreads/src/external_pthreads < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/pthreads.diff 
   BUILD_COMMAND ${PTHREADS_BUILD}
   INSTALL_COMMAND COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/pthreads/src/external_pthreads/pthreadVC2.dll ${LIBDIR}/pthreads/lib/pthreadVC2.dll && 
                           ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/pthreads/src/external_pthreads/pthreadVC2.lib ${LIBDIR}/pthreads/lib/pthreadVC2.lib &&        
@@ -263,6 +297,7 @@ ExternalProject_Add(external_pthreads
                           ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/pthreads/src/external_pthreads/semaphore.h ${LIBDIR}/pthreads/inc/semaphore.h         
   INSTALL_DIR ${LIBDIR}/pthreads
 )
+endif (BUILD_MODE STREQUAL Release)
 
 set(ILMBASE_VERSION 2.2.0)
 set(ILMBASE_URI http://download.savannah.nongnu.org/releases/openexr/ilmbase-${ILMBASE_VERSION}.tar.gz)
@@ -353,7 +388,7 @@ ExternalProject_Add(external_glew
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/glew ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${GLEW_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/glew
 )
-
+if (BUILD_MODE STREQUAL Release)
 set(FREEGLUT_VERSION 3.0.0)
 set(FREEGLUT_URI http://pilotfiber.dl.sourceforge.net/project/freeglut/freeglut/${FREEGLUT_VERSION}/freeglut-${FREEGLUT_VERSION}.tar.gz )
 set(FREEGLUT_HASH 90c3ca4dd9d51cf32276bc5344ec9754 ) 
@@ -370,7 +405,7 @@ ExternalProject_Add(external_freeglut
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/freeglut ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${GLEW_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/freeglut
 )
-
+endif (BUILD_MODE STREQUAL Release)
 
 set(ALEMBIC_GIT_URI https://github.com/alembic/alembic.git )
 set(ALEMBIC_GIT_UID 16f4ed6843f2b39d08c02338e0747f4dbcf8be20 ) 
@@ -411,8 +446,63 @@ ExternalProject_Add(external_alembic
   INSTALL_DIR ${LIBDIR}/alembic
 )
 
-set(OPENSUBDIV_GIT_URI https://github.com/PixarAnimationStudios/OpenSubdiv.git )
+add_dependencies(external_alembic external_boost external_zlib external_ilmbase )
+
+## hash is for 3.1.2 
+set(GLFW_GIT_UID 30306e54705c3adae9fe082c816a3be71963485c)
+set(GLFW_URI https://github.com/glfw/glfw/archive/${GLFW_GIT_UID}.zip )
+set(GLFW_HASH 20cacb1613da7eeb092f3ac4f6b2b3d0 )
+set(GLFW_EXTRA_ARGS )
+
+ExternalProject_Add(external_glfw
+  URL ${GLFW_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${GLFW_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/glfw
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/glfw -Wno-dev ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${GLFW_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/glfw
+)
+
+#latest uid in git as of 2016-04-01
+set(CLEW_GIT_UID 277db43f6cafe8b27c6f1055f69dc67da4aeb299)
+set(CLEW_URI https://github.com/OpenCLWrangler/clew/archive/${CLEW_GIT_UID}.zip )
+set(CLEW_HASH 2c699d10ed78362e71f56fae2a4c5f98 )
+set(CLEW_EXTRA_ARGS )
+
+ExternalProject_Add(external_clew
+  URL ${CLEW_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${CLEW_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/clew
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/clew -Wno-dev ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${CLEW_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/clew
+)
+
+#latest uid in git as of 2016-04-01
+set(CUEW_GIT_UID 1744972026de9cf27c8a7dc39cf39cd83d5f922f)
+set(CUEW_URI https://github.com/CudaWrangler/cuew/archive/${CUEW_GIT_UID}.zip )
+set(CUEW_HASH 86760d62978ebfd96cd93f5aa1abaf4a )
+set(CUEW_EXTRA_ARGS )
+
+ExternalProject_Add(external_cuew
+  URL ${CUEW_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${CUEW_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/cuew
+  PATCH_COMMAND ${PATCH_CMD} --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/cuew/src/external_cuew < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/cuew.diff 
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/cuew -Wno-dev ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${CUEW_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/cuew
+)
+
 set(OPENSUBDIV_GIT_UID cf7135eb2a77d7907192fb3be4da7caa1e708f96 ) 
+set(OPENSUBDIV_URI https://github.com/PixarAnimationStudios/OpenSubdiv/archive/${OPENSUBDIV_GIT_UID}.zip )
+set(OPENSUBDIV_Hash 6715e7f80fecf6dae8243901afc5b8ac ) 
+#no cuda support for vc15 yet
+if (msvc15)
+	set(OPENSUBDIV_CUDA Off)
+else()
+	set(OPENSUBDIV_CUDA On)
+endif()
 set(OPENSUBDIV_EXTRA_ARGS  
     -DNO_EXAMPLES=ON 
     -DNO_REGRESSION=ON 
@@ -420,22 +510,31 @@ set(OPENSUBDIV_EXTRA_ARGS
     -DNO_MAYA=ON 
     -DNO_PTEX=ON 
     -DNO_DOC=ON 
-    -DNO_CUDA=ON 
-    -DNO_OPENCL=ON 
+    -DNO_CUDA=${OPENSUBDIV_CUDA}
+    -DNO_OPENCL=Off 
     -DNO_TUTORIALS=ON 
 	-DGLEW_INCLUDE_DIR=${LIBDIR}/glew/include
 	-DGLEW_LIBRARY=${LIBDIR}/glew/lib/libglew.lib
+	-DGLFW_INCLUDE_DIR=${LIBDIR}/glfw/include
+	-DGLFW_LIBRARIES=${LIBDIR}/glfw/lib/glfw3.lib
+    -DCLEW_INCLUDE_DIR=${LIBDIR}/clew/include/cl
+    -DCLEW_LIBRARY=${LIBDIR}/clew/lib/clew.lib
+    -DCUEW_INCLUDE_DIR=${LIBDIR}/cuew/include
+    -DCUEW_LIBRARY=${LIBDIR}/cuew/lib/cuew.lib
 	-DCMAKE_EXE_LINKER_FLAGS_RELEASE=libcmt.lib 
 )
 
 ExternalProject_Add(external_opensubdiv
-  GIT_REPOSITORY ${OPENSUBDIV_GIT_URI}
-  GIT_TAG ${OPENSUBDIV_GIT_UID}
+  URL ${OPENSUBDIV_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${OPENSUBDIV_Hash}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/opensubdiv
-  PATCH_COMMAND patch --verbose -p 1 -d ${CMAKE_CURRENT_BINARY_DIR}/build/opensubdiv/src/external_opensubdiv < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/opensubdiv.diff 
+  PATCH_COMMAND ${PATCH_CMD} --verbose -p 1 -d ${CMAKE_CURRENT_BINARY_DIR}/build/opensubdiv/src/external_opensubdiv < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/opensubdiv.diff 
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/opensubdiv -Wno-dev ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${OPENSUBDIV_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/opensubdiv
 )
+
+add_dependencies(external_opensubdiv external_glew external_glfw external_clew external_cuew)
 
 #set(JACK_URI https://codeload.github.com/jackaudio/jack2/zip/ad5ddf6c2bbd64a254b4cc78de9114c10633da24?.zip)
 #set(JACK_HASH 6a317d0df2bd95fc696b9fbca6608568 ) 
@@ -479,7 +578,7 @@ ExternalProject_Add(external_opencollada
   GIT_REPOSITORY ${OPENCOLLADA_GIT_URI}
   GIT_TAG ${OPENCOLLADA_GIT_UID}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/opencollada
-  PATCH_COMMAND patch --verbose -p 1 -d ${CMAKE_CURRENT_BINARY_DIR}/build/opencollada/src/external_opencollada < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/opencollada.diff 
+  PATCH_COMMAND ${PATCH_CMD} --verbose -p 1 -d ${CMAKE_CURRENT_BINARY_DIR}/build/opencollada/src/external_opencollada < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/opencollada.diff 
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/opencollada ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${OPENCOLLADA_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/opencollada
 )
@@ -520,6 +619,7 @@ set(LLVM_URI http://llvm.org/releases/${LLVM_VERSION}/llvm-${LLVM_VERSION}.src.t
 set(LLVM_HASH a20669f75967440de949ac3b1bad439c)
 set(LLVM_EXTRA_ARGS 
  -DLLVM_USE_CRT_RELEASE=MT 
+ -DLLVM_USE_CRT_DEBUG=MTd
  -DLLVM_INCLUDE_TESTS=OFF 
  -DLLVM_TARGETS_TO_BUILD=X86
  -DLLVM_INCLUDE_EXAMPLES=OFF
@@ -540,12 +640,13 @@ set(CLANG_EXTRA_ARGS
    -DCLANG_PATH_TO_LLVM_SOURCE=${CMAKE_CURRENT_BINARY_DIR}/build/llvm/src/external_llvm
    -DCLANG_PATH_TO_LLVM_BUILD=${LIBDIR}/llvm
    -DLLVM_USE_CRT_RELEASE=MT
+   -DLLVM_USE_CRT_DEBUG=MTd
    )
 ExternalProject_Add(external_clang
   URL ${CLANG_URI}
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   URL_HASH MD5=${CLANG_HASH}
-  PATCH_COMMAND patch -p 2 -R -d ${CMAKE_CURRENT_BINARY_DIR}/build/clang/src/external_clang < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/clang.diff 
+  PATCH_COMMAND ${PATCH_CMD} -p 2 -R -d ${CMAKE_CURRENT_BINARY_DIR}/build/clang/src/external_clang < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/clang.diff 
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/clang
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/llvm ${DEFAULT_C_FLAGS} ${CLANG_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/llvm
@@ -615,6 +716,7 @@ ExternalProject_Add(external_openimageio
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   URL_HASH MD5=${OPENIMAGEIO_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/openimageio
+  PATCH_COMMAND ${PATCH_CMD} -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/openimageio/src/external_openimageio/src/include < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/OpenImageIO_GDI.diff
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/openimageio ${DEFAULT_C_FLAGS} ${OPENIMAGEIO_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/openimageio
 )
@@ -639,6 +741,15 @@ ExternalProject_Add(external_tiff
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/tiff ${DEFAULT_C_FLAGS} ${TIFF_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/tiff
 )
+
+add_dependencies(external_tiff external_zlib )
+if (BUILD_MODE STREQUAL Debug)
+ExternalProject_Add_Step(external_tiff after_install
+ COMMAND ${CMAKE_COMMAND} -E copy ${LIBDIR}/tiff/lib/tiffd.lib  ${LIBDIR}/tiff/lib/tiff.lib
+ DEPENDEES install
+ )
+endif (BUILD_MODE STREQUAL Debug)
+
 
 
 set(FLEXBISON_VERSION 2.5.5)
@@ -668,7 +779,7 @@ set(OSL_CMAKE_CXX_FLAGS_DEBUG "/D_DEBUG /MTd /Zi /Ob0 /Od /RTC1 /DOIIO_STATIC_BU
 set(OSL_CMAKE_CXX_FLAGS_MINSIZEREL "/MT /O1 /Ob1 /D NDEBUG /DOIIO_STATIC_BUILD /DTINYFORMAT_ALLOW_WCHAR_STRINGS")
 set(OSL_CMAKE_CXX_FLAGS_RELEASE "/MT /O2 /Ob2 /D NDEBUG /DOIIO_STATIC_BUILD /DTINYFORMAT_ALLOW_WCHAR_STRINGS")
 set(OSL_CMAKE_CXX_FLAGS_RELWITHDEBINFO "/MT /Zi /O2 /Ob1 /D NDEBUG /DOIIO_STATIC_BUILD /DTINYFORMAT_ALLOW_WCHAR_STRINGS")
-set(OSL_CMAKE_CXX_STANDARD_LIBRARIES "kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib psapi.lib ${LIBDIR}/openimageio/lib/OpenImageIO_Util.lib ${LIBDIR}/png/lib/libpng16.lib ${LIBDIR}/jpg/lib/jpeg.lib ${LIBDIR}/tiff/lib/tiff.lib ${LIBDIR}/openexr/lib/IlmImf-2_2.lib")
+set(OSL_CMAKE_CXX_STANDARD_LIBRARIES "kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib psapi.lib ${LIBDIR}/openimageio/lib/OpenImageIO_Util.lib ${LIBDIR}/png/lib/libpng16_static.lib ${LIBDIR}/jpg/lib/jpeg.lib ${LIBDIR}/tiff/lib/tiff.lib ${LIBDIR}/openexr/lib/IlmImf-2_2.lib")
 set(OSL_ILMBASE_CUSTOM_LIBRARIES "${LIBDIR}/ilmbase/lib/Imath-2_2.lib^^${LIBDIR}/ilmbase/lib/Half.lib^^${LIBDIR}/ilmbase/lib/IlmThread-2_2.lib^^${LIBDIR}/ilmbase/lib/Iex-2_2.lib")
 set(OSL_OPENIMAGEIO_LIBRARY "${LIBDIR}/openimageio/lib/OpenImageIO.lib^^${LIBDIR}/openimageio/lib/OpenImageIO_Util.lib^^${LIBDIR}/png/lib/libpng16.lib^^${LIBDIR}/jpg/lib/jpeg.lib^^${LIBDIR}/tiff/lib/tiff.lib^^${LIBDIR}/openexr/lib/IlmImf-2_2.lib")
 set(OSL_LLVM_LIBRARY "${LIBDIR}/llvm/lib/LLVMAnalysis.lib^^${LIBDIR}/llvm/lib/LLVMAsmParser.lib^^${LIBDIR}/llvm/lib/LLVMAsmPrinter.lib^^${LIBDIR}/llvm/lib/LLVMBitReader.lib^^${LIBDIR}/llvm/lib/LLVMBitWriter.lib^^${LIBDIR}/llvm/lib/LLVMCodeGen.lib^^${LIBDIR}/llvm/lib/LLVMCore.lib^^${LIBDIR}/llvm/lib/LLVMDebugInfo.lib^^${LIBDIR}/llvm/lib/LLVMExecutionEngine.lib^^${LIBDIR}/llvm/lib/LLVMInstCombine.lib^^${LIBDIR}/llvm/lib/LLVMInstrumentation.lib^^${LIBDIR}/llvm/lib/LLVMInterpreter.lib^^${LIBDIR}/llvm/lib/LLVMJIT.lib^^${LIBDIR}/llvm/lib/LLVMLinker.lib^^${LIBDIR}/llvm/lib/LLVMMC.lib^^${LIBDIR}/llvm/lib/LLVMMCDisassembler.lib^^${LIBDIR}/llvm/lib/LLVMMCJIT.lib^^${LIBDIR}/llvm/lib/LLVMMCParser.lib^^${LIBDIR}/llvm/lib/LLVMObject.lib^^${LIBDIR}/llvm/lib/LLVMRuntimeDyld.lib^^${LIBDIR}/llvm/lib/LLVMScalarOpts.lib^^${LIBDIR}/llvm/lib/LLVMSelectionDAG.lib^^${LIBDIR}/llvm/lib/LLVMSupport.lib^^${LIBDIR}/llvm/lib/LLVMTableGen.lib^^${LIBDIR}/llvm/lib/LLVMTarget.lib^^${LIBDIR}/llvm/lib/LLVMTransformUtils.lib^^${LIBDIR}/llvm/lib/LLVMVectorize.lib^^${LIBDIR}/llvm/lib/LLVMX86AsmParser.lib^^${LIBDIR}/llvm/lib/LLVMX86AsmPrinter.lib^^${LIBDIR}/llvm/lib/LLVMX86CodeGen.lib^^${LIBDIR}/llvm/lib/LLVMX86Desc.lib^^${LIBDIR}/llvm/lib/LLVMX86Disassembler.lib^^${LIBDIR}/llvm/lib/LLVMX86Info.lib^^${LIBDIR}/llvm/lib/LLVMX86Utils.lib^^${LIBDIR}/llvm/lib/LLVMipa.lib^^${LIBDIR}/llvm/lib/LLVMipo.lib")
@@ -694,7 +805,7 @@ set(OSL_EXTRA_ARGS
 	-DILMBASE_HOME=${LIBDIR}/openexr 
 	-DILMBASE_VERSION=2_2 
 	-USE_SIMD=sse2  
-	-OSL_BUILD_TESTS=OFF 
+	-DOSL_BUILD_TESTS=OFF 
     -DZLIB_LIBRARY=${LIBDIR}/zlib/lib/zlibstatic.lib
     -DZLIB_INCLUDE_DIR=${LIBDIR}/zlib/include/
     -DOPENIMAGEIOHOME=${LIBDIR}/OpenImageIO 
@@ -718,8 +829,8 @@ ExternalProject_Add(external_osl
   LIST_SEPARATOR ^^
   URL_HASH MD5=${OSL_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/osl
-  PATCH_COMMAND patch -p 3 -d ${CMAKE_CURRENT_BINARY_DIR}/build/osl/src/external_osl < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/osl_171.diff 
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/osl ${DEFAULT_C_FLAGS} ${OSL_EXTRA_ARGS} 
+  PATCH_COMMAND ${PATCH_CMD} -p 3 -d ${CMAKE_CURRENT_BINARY_DIR}/build/osl/src/external_osl < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/osl_171.diff 
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/osl -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ${DEFAULT_C_FLAGS} ${OSL_EXTRA_ARGS} 
   INSTALL_DIR ${LIBDIR}/osl
 )
 add_dependencies(external_osl external_boost external_llvm external_clang external_ilmbase external_openexr external_zlib external_flexbison)
@@ -789,18 +900,33 @@ set(OPENVDB_EXTRA_ARGS
 
    )
 
+set(OPENVDB_CMAKE_CXX_FLAGS_DEBUG "/bigobj /D_DEBUG /D PLATFORM_WINDOWS /MTd /Zi /Ob0 /Od /RTC1" )
+set(OPENVDB_CXX_FLAGS
+ -DCMAKE_CXX_FLAGS_DEBUG=${OPENVDB_CMAKE_CXX_FLAGS_DEBUG}
+ -DCMAKE_CXX_FLAGS_MINSIZEREL=${BLEND_CXX_FLAGS_MINSIZEREL}
+ -DCMAKE_CXX_FLAGS_RELEASE=${BLEND_C_FLAGS_RELEASE}
+ -DCMAKE_CXX_FLAGS_RELWITHDEBINFO=${BLEND_C_FLAGS_RELWITHDEBINFO}
+ )
+
 #cmake script for openvdb based on https://raw.githubusercontent.com/diekev/openvdb-cmake/master/CMakeLists.txt
 #can't be in external_openvdb because of how the includes are setup. 
+
+
 ExternalProject_Add(openvdb
   URL ${OPENVDB_URI}
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   URL_HASH MD5=${OPENVDB_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/openvdb
   PATCH_COMMAND COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/diffs/cmakelists_openvdb.txt  ${CMAKE_CURRENT_BINARY_DIR}/build/openvdb/src/openvdb/cmakelists.txt &&
-						${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/diffs/cmake/  ${CMAKE_CURRENT_BINARY_DIR}/build/openvdb/src/openvdb/cmake/
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/openvdb ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${OPENVDB_EXTRA_ARGS}
+                        ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/diffs/cmake/  ${CMAKE_CURRENT_BINARY_DIR}/build/openvdb/src/openvdb/cmake/ &&
+                        ${PATCH_CMD} --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/openvdb/src/openvdb < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/openvdb_vc2013.diff 
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/openvdb ${DEFAULT_C_FLAGS} ${OPENVDB_CXX_FLAGS} ${OPENVDB_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/openvdb
 )
+
+add_dependencies(openvdb external_tbb external_boost external_ilmbase external_openexr external_zlib)
+
+
 if (ENABLE_MINGW64)
 ####################################################################################################################
 # Mingw64 Builds
@@ -859,7 +985,7 @@ endif()
 if ( (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/mingw-get.exe") AND (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/msys/1.0/bin/make.exe") )
 	Message("Installing MSYS")
 	EXECUTE_PROCESS(
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/mingw-get install msys 
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/mingw-get install msys msys-patch
         WORKING_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/
     )
 endif()
@@ -888,14 +1014,14 @@ if ( (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/coreutils-5.97-MSYS-1.0.11-s
     )
 endif()
 
-if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/mingw64sh.cmd") 
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/ming64sh.cmd") 
 	Message("Installing ming64sh.cmd")
 	EXECUTE_PROCESS(
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/diffs/ming64sh.cmd  ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/ming64sh.cmd 
     )
 endif()
 
-
+if (BUILD_MODE STREQUAL Release)
 set(FFMPEG_VERSION 3.0)
 set(FFMPEG_URI http://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.bz2)
 set(FFMPEG_HASH 026859cc76dddffd809cad879db07658)
@@ -906,7 +1032,8 @@ ExternalProject_Add(external_ffmpeg
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   URL_HASH MD5=${FFMPEG_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg
-  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg/src/external_ffmpeg/ && sh ./configure --enable-static --prefix=${mingw_LIBDIR}/ffmpeg
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg/src/external_ffmpeg/ && sh ./configure --toolchain=msvc --enable-shared --disable-static --disable-avfilter --disable-vdpau  --disable-bzlib --disable-libgsm --disable-libspeex --prefix=${LIBDIR}/ffmpeg
+  PATCH_COMMAND ${PATCH_CMD} --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg/src/external_ffmpeg < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/ffmpeg.diff 
   BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg/src/external_ffmpeg/ && make 
   INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg/src/external_ffmpeg/ && make install
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/ffmpeg ${DEFAULT_C_FLAGS} ${FFMPEG_EXTRA_ARGS}
@@ -923,7 +1050,8 @@ ExternalProject_Add(external_fftw3
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   URL_HASH MD5=${FFTW_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/fftw3
-  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/fftw3/src/external_fftw3/ && sh ./configure --enable-static --prefix=${mingw_LIBDIR}/fftw3
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/fftw3/src/external_fftw3/ && set CFLAGS=-fno-stack-check -fno-stack-protector -mno-stack-arg-probe && sh ./configure --enable-static --prefix=${mingw_LIBDIR}/fftw3 
+  PATCH_COMMAND ${PATCH_CMD} --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/fftw3/src/external_fftw3 < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/fftw3.diff 
   BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/fftw3/src/external_fftw3/ && make 
   INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/fftw3/src/external_fftw3/ && make install
   INSTALL_DIR ${LIBDIR}/fftw3
@@ -960,7 +1088,7 @@ ExternalProject_Add(external_lapack
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   URL_HASH MD5=${LAPACK_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/lapack
-  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/lapack/src/external_lapack/ && ${CMAKE_COMMAND} -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX=${LIBDIR}/lapack . 
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/lapack/src/external_lapack/ && ${CMAKE_COMMAND} -G "MSYS Makefiles" -DCMAKE_Fortran_COMPILER=${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/gfortran.exe -DCMAKE_INSTALL_PREFIX=${LIBDIR}/lapack . 
   BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/lapack/src/external_lapack/ && make 
   INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/lapack/src/external_lapack/ && make install
 
@@ -983,5 +1111,140 @@ ExternalProject_Add(external_sndfile
   INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/sndfile/src/external_sndfile/ && make install
   INSTALL_DIR ${LIBDIR}/sndfile
 )
-
+endif(BUILD_MODE STREQUAL Release)
 endif(ENABLE_MINGW64)
+########################################################################
+# Copy all generated files to the proper strucure as blender prefers
+########################################################################
+
+
+if(NOT DEFINED HARVEST_TARGET)
+set(HARVEST_TARGET ${CMAKE_CURRENT_SOURCE_DIR}\Harvest )
+endif()
+message("HARVEST_TARGET = ${HARVEST_TARGET}")
+
+if (BUILD_MODE STREQUAL Release)
+add_custom_target( Harvest_Release_Results  
+#Zlib Rename the lib file and copy the include/bin folders
+                        COMMAND ${CMAKE_COMMAND} -E copy ${LIBDIR}/zlib/lib/zlibstatic.lib ${HARVEST_TARGET}/zlib/lib/libz_st.lib &&
+							    ${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/zlib/include/ ${HARVEST_TARGET}/zlib/include/ &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/zlib/bin/ ${HARVEST_TARGET}/zlib/bin/ &&
+#Boost copy lib + rename boost_1_60 to boost 
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/boost/lib/ ${HARVEST_TARGET}/boost/lib/ &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/boost/include/boost-1_60/ ${HARVEST_TARGET}/boost/include/ &&
+#jpeg rename libfile + copy include 
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/jpg/lib/jpeg-static.lib ${HARVEST_TARGET}/jpeg/lib/libjpeg.lib &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/jpg/include/ ${HARVEST_TARGET}/jpeg/include/ &&
+#FreeType, straight up copy 
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/freetype ${HARVEST_TARGET}/freetype && 
+#pthreads, rename include dir
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/pthreads/inc/ ${HARVEST_TARGET}/pthreads/include/ &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/pthreads/lib/ ${HARVEST_TARGET}/pthreads/lib &&
+#ffmpeg copy include+bin
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/ffmpeg/include ${HARVEST_TARGET}/ffmpeg/include && 
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/ffmpeg/bin ${HARVEST_TARGET}/ffmpeg/lib && 
+#sdl merge bin/lib folder, copy include
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/sdl/include/sdl2 ${HARVEST_TARGET}/sdl/include && 
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/sdl/lib ${HARVEST_TARGET}/sdl/lib &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/sdl/bin ${HARVEST_TARGET}/sdl/lib &&
+#openal 
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/openal/lib/openal32.lib ${HARVEST_TARGET}/openal/lib/openal32.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/openal/bin/openal32.dll ${HARVEST_TARGET}/openal/lib/openal32.dll &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/openal/include/ ${HARVEST_TARGET}/openal/include/  &&
+#OpenImageIO
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/OpenImageIO/include ${HARVEST_TARGET}/OpenImageIO/include && 
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/OpenImageIO/lib ${HARVEST_TARGET}/OpenImageIO/lib &&
+#openEXR
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/ilmbase ${HARVEST_TARGET}/openexr &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/openexr/lib ${HARVEST_TARGET}/openexr/lib &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/openexr/include ${HARVEST_TARGET}/openexr/include && 
+#png
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/png/lib/libpng16_static.lib ${HARVEST_TARGET}/png/lib/libpng.lib &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/png/include/ ${HARVEST_TARGET}/png/include/  &&
+#fftw3
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/fftw3/lib/libfftw3.a ${HARVEST_TARGET}/fftw3/lib/libfftw.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/fftw3/include/fftw3.h ${HARVEST_TARGET}/fftw3/include/fftw3.h &&
+#freeglut-> opengl
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/freeglut/lib/freeglut_static.lib ${HARVEST_TARGET}/opengl/lib/freeglut_static.lib &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/freeglut/include/ ${HARVEST_TARGET}/opengl/include/  &&
+#glew-> opengl
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/glew/lib/libglew32.lib ${HARVEST_TARGET}/opengl/lib/glew.lib &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/glew/include/ ${HARVEST_TARGET}/opengl/include/ && 
+#sndfile 
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/sndfile/lib/libsndfile.dll.a ${HARVEST_TARGET}/sndfile/lib/libsndfile-1.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/sndfile/bin/libsndfile-1.dll ${HARVEST_TARGET}/sndfile/lib/libsndfile-1.dll &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/sndfile/include/sndfile.h ${HARVEST_TARGET}/sndfile/include/sndfile.h &&
+#tiff
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/tiff/lib/tiff.lib ${HARVEST_TARGET}/tiff/lib/libtiff.lib &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/tiff/include/ ${HARVEST_TARGET}/tiff/include/ &&
+#iconv
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/iconv/lib/libiconv.a ${HARVEST_TARGET}/iconv/lib/iconv.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/iconv/include/iconv.h ${HARVEST_TARGET}/iconv/include/iconv.h &&
+#opencolorIO 
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opencolorio/ ${HARVEST_TARGET}/opencolorio &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencolorio/lib/OpenColorIO.dll ${HARVEST_TARGET}/opencolorio/bin/OpenColorIO.dll &&
+#Osl
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/osl/ ${HARVEST_TARGET}/osl &&
+#OpenVDB
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/openVDB/ ${HARVEST_TARGET}/openVDB &&
+#blosc
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/blosc/lib/libblosc.lib ${HARVEST_TARGET}/blosc/lib/libblosc.lib &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/blosc/include/ ${HARVEST_TARGET}/blosc/include/  && 
+#tbb
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/tbb/lib/tbb_static.lib ${HARVEST_TARGET}/tbb/lib/tbb.lib &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/tbb/include/ ${HARVEST_TARGET}/tbb/include/  &&
+#llvm
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/llvm/ ${HARVEST_TARGET}/llvm/ &&
+#opencollada
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opencollada/ ${HARVEST_TARGET}/opencollada/ &&
+#opensubdiv
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opensubdiv ${HARVEST_TARGET}/opensubdiv
+
+								DEPENDS )
+endif (BUILD_MODE STREQUAL Release)
+
+if (BUILD_MODE STREQUAL Debug)
+add_custom_target( Harvest_Debug_Results  
+#OpenImageIO
+                        COMMAND ${CMAKE_COMMAND} -E copy ${LIBDIR}/openimageio/lib/OpenImageIO.lib ${HARVEST_TARGET}/openimageio/lib/OpenImageIO_d.lib &&
+							    ${CMAKE_COMMAND} -E copy ${LIBDIR}/openimageio/lib/OpenImageIO_Util.lib ${HARVEST_TARGET}/openimageio/lib/OpenImageIO_Util_d.lib &&
+#ilmbase+openexr
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/ilmbase/lib/Half.lib ${HARVEST_TARGET}/openexr/lib/Half_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/ilmbase/lib/Iex-2_2.lib ${HARVEST_TARGET}/openexr/lib/Iex-2_2_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/ilmbase/lib/IexMath-2_2.lib ${HARVEST_TARGET}/openexr/lib/IexMath-2_2_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/ilmbase/lib/IlmThread-2_2.lib ${HARVEST_TARGET}/openexr/lib/IlmThread-2_2_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/ilmbase/lib/Imath-2_2.lib ${HARVEST_TARGET}/openexr/lib/Imath-2_2_d.lib && 
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/openexr/lib/IlmImf-2_2.lib ${HARVEST_TARGET}/openexr/lib/IlmImf-2_2_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/openexr/lib/IlmImfUtil-2_2.lib ${HARVEST_TARGET}/openexr/lib/IlmImfUtil-2_2_d.lib.lib  &&
+#opencollada
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencollada/lib/opencollada/buffer.lib  ${HARVEST_TARGET}/opencollada/lib/opencollada/buffer_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencollada/lib/opencollada/ftoa.lib ${HARVEST_TARGET}/opencollada/lib/opencollada/ftoa_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencollada/lib/opencollada/GeneratedSaxParser.lib ${HARVEST_TARGET}/opencollada/lib/opencollada/GeneratedSaxParser_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencollada/lib/opencollada/MathMLSolver.lib ${HARVEST_TARGET}/opencollada/lib/opencollada/MathMLSolver_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencollada/lib/opencollada/OpenCOLLADABaseUtils.lib ${HARVEST_TARGET}/opencollada/lib/opencollada/OpenCOLLADABaseUtils_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencollada/lib/opencollada/OpenCOLLADAFramework.lib ${HARVEST_TARGET}/opencollada/lib/opencollada/OpenCOLLADAFramework_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencollada/lib/opencollada/OpenCOLLADASaxFrameworkLoader.lib ${HARVEST_TARGET}/opencollada/lib/opencollada/OpenCOLLADASaxFrameworkLoader_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencollada/lib/opencollada/OpenCOLLADAStreamWriter.lib ${HARVEST_TARGET}/opencollada/lib/opencollada/OpenCOLLADAStreamWriter_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencollada/lib/opencollada/pcre.lib ${HARVEST_TARGET}/opencollada/lib/opencollada/pcre_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencollada/lib/opencollada/UTF.lib ${HARVEST_TARGET}/opencollada/lib/opencollada/UTF_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencollada/lib/opencollada/xml.lib ${HARVEST_TARGET}/opencollada/lib/opencollada/xml_d.lib && 
+#boost 
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/boost/lib/ ${HARVEST_TARGET}/boost/lib/ &&  
+#llvm
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/llvm/lib/ ${HARVEST_TARGET}/llvm/debug/lib/ &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/llvm/bin/ ${HARVEST_TARGET}/llvm/debug/bin/ &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/llvm/include/ ${HARVEST_TARGET}/llvm/debug/include/ &&
+#osl
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/osl/lib/oslcomp.lib ${HARVEST_TARGET}/osl/lib/oslcomp_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/osl/lib/oslexec.lib ${HARVEST_TARGET}/osl/lib/oslexec_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/osl/lib/oslquery.lib ${HARVEST_TARGET}/osl/lib/oslquery_d.lib &&
+#opensubdiv
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opensubdiv/lib/osdCPU.lib ${HARVEST_TARGET}/opensubdiv/lib/osdCPU_d.lib &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/opensubdiv/lib/osdGPU.lib ${HARVEST_TARGET}/opensubdiv/lib/osdGPU_d.lib &&
+#tbb
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/tbb/lib/tbb_static.lib ${HARVEST_TARGET}/tbb/lib/tbb_debug.lib &&
+#openvdb
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/openvdb/lib/openvdb.lib ${HARVEST_TARGET}/openvdb/lib/openvdb_d.lib 
+							
+)
+endif (BUILD_MODE STREQUAL Debug)
