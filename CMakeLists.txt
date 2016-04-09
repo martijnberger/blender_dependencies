@@ -944,7 +944,7 @@ macro(cmake_to_msys_path MsysPath ResultingPath)
 endmacro()
 cmake_to_msys_path(${LIBDIR} mingw_LIBDIR)
 message("mingw_LIBDIR = ${mingw_LIBDIR}")
-
+Message("Checking for mingw64")
 #download ming64
 if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/x86_64-w64-mingw32-gcc-4.8.0-win64_rubenvb.7z")
 	Message("Downloading mingw64")
@@ -968,6 +968,7 @@ if ( (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/mingw64env.cmd") AND
     )
 endif()
 
+Message("Checking for mingwGet")
 if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip")
 	Message("Downloading mingw-get")
     file(DOWNLOAD "http://heanet.dl.sourceforge.net/project/mingw/Installer/mingw-get/mingw-get-0.6.2-beta-20131004-1/mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip" "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip")
@@ -990,6 +991,7 @@ if ( (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/mingw-get.exe") AND 
     )
 endif()
 
+Message("Checking for CoreUtils")
 #download old core_utils for pr.exe (ffmpeg needs it to build)
 if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/coreutils-5.97-MSYS-1.0.11-snapshot.tar.bz2")
 	Message("Downloading CoreUtils 5.97")
@@ -1021,7 +1023,278 @@ if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/ming64sh.cmd")
     )
 endif()
 
+Message("Checking for perl")
+#download perl for libvpx
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/strawberry-perl-5.22.1.3-64bit-portable.zip")
+	Message("Downloading perl")
+	file(DOWNLOAD "http://strawberryperl.com/download/5.22.1.3/strawberry-perl-5.22.1.3-64bit-portable.zip" "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/strawberry-perl-5.22.1.3-64bit-portable.zip") 
+endif()
+
+#make perl root directory
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/perl")
+    EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/perl
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+endif()
+
+#extract perl
+if ( (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/perl/portable.perl") AND (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/strawberry-perl-5.22.1.3-64bit-portable.zip") )
+	Message("Extracting perl")
+    EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} -E tar jxf ${CMAKE_CURRENT_SOURCE_DIR}/Downloads/strawberry-perl-5.22.1.3-64bit-portable.zip
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/perl
+    )
+endif()
+
+#get yasm for vpx
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/yasm.exe")
+	Message("Downloading yasm")
+	file(DOWNLOAD "http://www.tortall.net/projects/yasm/releases/yasm-1.3.0-win64.exe" "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/yasm.exe") 
+endif()
+
+Message("checking x86_64-w64-mingw32-strings.exe")
+#copy strings.exe to x86_64-w64-mingw32-strings.exe for x264
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/x86_64-w64-mingw32-strings.exe")
+	Message("fixing x86_64-w64-mingw32-strings.exe")
+	EXECUTE_PROCESS(
+		COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/strings.exe" "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/x86_64-w64-mingw32-strings.exe"
+    )	
+endif()
+
+Message("checking x86_64-w64-mingw32-ar.exe")
+#copy ar.exe to x86_64-w64-mingw32-ar.exe for x264
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/x86_64-w64-mingw32-ar.exe")
+	Message("fixing x86_64-w64-mingw32-ar.exe")
+	EXECUTE_PROCESS(
+		COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/ar.exe" "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/x86_64-w64-mingw32-ar.exe"
+    )	
+endif()
+
+Message("checking x86_64-w64-mingw32-strip.exe")
+#copy strip.exe to x86_64-w64-mingw32-strip.exe for x264
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/x86_64-w64-mingw32-strip.exe")
+	Message("fixing x86_64-w64-mingw32-strip.exe")
+	EXECUTE_PROCESS(
+		COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/strip.exe" "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/x86_64-w64-mingw32-strip.exe"
+    )	
+endif()
+
+Message("checking x86_64-w64-mingw32-ranlib.exe")
+#copy ranlib.exe to x86_64-w64-mingw32-ranlib.exe for x264
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/x86_64-w64-mingw32-ranlib.exe")
+	Message("fixing x86_64-w64-mingw32-ranlib.exe")
+	EXECUTE_PROCESS(
+		COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/ranlib.exe" "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/x86_64-w64-mingw32-ranlib.exe"
+    )	
+endif()
+
+
 if (BUILD_MODE STREQUAL Release)
+Message("CXX = ${CMAKE_CXX_COMPILER}")
+
+
+set(LAME_VERSION 3.99.5)
+set(LAME_URI http://downloads.sourceforge.net/project/lame/lame/3.99/lame-${LAME_VERSION}.tar.gz)
+set(LAME_HASH 84835b313d4a8b68f5349816d33e07ce)
+set(LAME_EXTRA_ARGS  )
+ExternalProject_Add(external_lame
+  URL ${LAME_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${LAME_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/lame
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/lame/src/external_lame/ && set CFLAGS=-g && set LDFLAGS=-Wl,--as-needed -static-libgcc && sh ./configure --prefix=${LIBDIR}/lame --disable-shared --enable-static 
+    --enable-export=full 
+    --with-fileio=sndfile 
+    --without-vorbis
+    --with-pic 
+    --disable-mp3x 
+    --disable-mp3rtp 
+    --disable-gtktest 
+    --enable-export=full  
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/lame/src/external_lame/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/lame/src/external_lame/ && make install
+  INSTALL_DIR ${LIBDIR}/lame
+)
+
+set(OGG_VERSION 1.3.2)
+set(OGG_URI http://downloads.xiph.org/releases/ogg/libogg-${OGG_VERSION}.tar.gz)
+set(OGG_HASH e19ee34711d7af328cb26287f4137e70630e7261b17cbe3cd41011d73a654692)
+ExternalProject_Add(external_ogg
+  URL ${OGG_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH SHA256=${OGG_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/ogg
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/ogg/src/external_ogg/ && set CFLAGS=-g && set LDFLAGS=-Wl,--as-needed -static-libgcc && sh ./configure --prefix=${LIBDIR}/ogg --disable-shared --enable-static 
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/ogg/src/external_ogg/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/ogg/src/external_ogg/ && make install
+  INSTALL_DIR ${LIBDIR}/ogg
+)
+
+set(VORBIS_VERSION 1.3.5)
+set(VORBIS_URI http://downloads.xiph.org/releases/vorbis/libvorbis-${VORBIS_VERSION}.tar.gz)
+set(VORBIS_HASH 6efbcecdd3e5dfbf090341b485da9d176eb250d893e3eb378c428a2db38301ce)
+ExternalProject_Add(external_vorbis
+  URL ${VORBIS_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH SHA256=${VORBIS_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/vorbis
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/vorbis/src/external_vorbis/ && set CFLAGS=-g && set LDFLAGS=-Wl,--as-needed -static-libgcc && sh ./configure --prefix=${LIBDIR}/vorbis --disable-shared --enable-static 
+    --with-pic 
+    --with-ogg=${LIBDIR}/ogg
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/vorbis/src/external_vorbis/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/vorbis/src/external_vorbis/ && make install
+  INSTALL_DIR ${LIBDIR}/vorbis
+)
+add_dependencies(external_vorbis external_ogg)
+
+set(THEORA_VERSION 1.1.1)
+set(THEORA_URI http://downloads.xiph.org/releases/theora/libtheora-${THEORA_VERSION}.tar.bz2)
+set(THEORA_HASH b6ae1ee2fa3d42ac489287d3ec34c5885730b1296f0801ae577a35193d3affbc)
+ExternalProject_Add(external_theora
+  URL ${THEORA_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH SHA256=${THEORA_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/theora
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/theora/src/external_theora/ && set CFLAGS=-g && set LDFLAGS=-Wl,--as-needed -static-libgcc && sh ./configure --prefix=${LIBDIR}/theora --disable-shared --enable-static 
+    --with-pic 
+    --with-ogg=${LIBDIR}/ogg
+    --with-vorbis=${LIBDIR}/vorbis
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/theora/src/external_theora/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/theora/src/external_theora/ && make install
+  INSTALL_DIR ${LIBDIR}/theora
+)
+add_dependencies(external_theora external_vorbis external_ogg)
+
+set(VPX_VERSION 1.5.0)
+set(VPX_URI http://storage.googleapis.com/downloads.webmproject.org/releases/webm/libvpx-${VPX_VERSION}.tar.bz2)
+set(VPX_HASH 306d67908625675f8e188d37a81fbfafdf5068b09d9aa52702b6fbe601c76797)
+ExternalProject_Add(external_vpx
+  URL ${VPX_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH SHA256=${VPX_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/vpx
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && 
+	 call ming64sh.cmd && 
+	 call ${CMAKE_CURRENT_SOURCE_DIR}/perl/portableshell.bat  &&
+	 set path && 
+	 cd ${CMAKE_CURRENT_BINARY_DIR}/build/vpx/src/external_vpx/ && 
+	 sh ./configure --prefix=${LIBDIR}/vpx --disable-shared --enable-static 
+    --disable-install-bins 
+    --disable-install-srcs 
+    --disable-sse4_1 
+    --disable-sse3 
+    --disable-ssse3 
+    --disable-avx 
+    --disable-avx2 
+    --disable-unit-tests 
+    --disable-examples  
+	--target=x86_64-win64-gcc
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ${CMAKE_CURRENT_SOURCE_DIR}/perl/portableshell.bat  && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/vpx/src/external_vpx/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ${CMAKE_CURRENT_SOURCE_DIR}/perl/portableshell.bat && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/vpx/src/external_vpx/ && make install
+  INSTALL_DIR ${LIBDIR}/vpx
+)
+
+set(ORC_VERSION 0.4.25)
+set(ORC_URI https://gstreamer.freedesktop.org/src/orc/orc-${ORC_VERSION}.tar.xz)
+set(ORC_HASH c1b1d54a58f26d483f0b3881538984789fe5d5460ab8fab74a1cacbd3d1c53d1)
+ExternalProject_Add(external_orc
+  URL ${ORC_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH SHA256=${ORC_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/orc
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/orc/src/external_orc/ && set CFLAGS=-g  && set LDFLAGS=-Wl,--as-needed -static-libgcc && sh ./configure --prefix=${LIBDIR}/orc --disable-shared --enable-static 
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/orc/src/external_orc/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/orc/src/external_orc/ && make install
+  INSTALL_DIR ${LIBDIR}/orc
+)
+
+set(SCHROEDINGER_VERSION 1.0.11)
+set(SCHROEDINGER_URI http://diracvideo.org/download/schroedinger/schroedinger-${SCHROEDINGER_VERSION}.tar.gz)
+set(SCHROEDINGER_HASH 1e572a0735b92aca5746c4528f9bebd35aa0ccf8619b22fa2756137a8cc9f912)
+ExternalProject_Add(external_schroedinger
+  URL ${SCHROEDINGER_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH SHA256=${SCHROEDINGER_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/schroedinger
+  PATCH_COMMAND ${PATCH_CMD} --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/schroedinger/src/external_schroedinger < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/schroedinger.diff  
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && 
+                    call ming64sh.cmd && 
+					set path && 
+					cd ${CMAKE_CURRENT_BINARY_DIR}/build/schroedinger/src/external_schroedinger/ && 
+					set CFLAGS=-g -I./ -I${LIBDIR}/orc/include/orc-0.4 && set LDFLAGS=-Wl,--as-needed -static-libgcc -L${LIBDIR}/orc/lib &&  
+					set ORC_CFLAGS=-I${LIBDIR}/orc/include/orc-0.4 && 
+					set ORC_LDFLAGS=-L${LIBDIR}/orc/lib && 
+					set ORC_LIBS=${LIBDIR}/orc/lib/liborc-0.4.a && set ORCC=${LIBDIR}/orc/bin/orcc.exe && sh ./configure --prefix=${LIBDIR}/schroedinger --disable-shared --enable-static 
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/schroedinger/src/external_schroedinger/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/schroedinger/src/external_schroedinger/ && make install
+  INSTALL_DIR ${LIBDIR}/schroedinger
+)
+add_dependencies(external_schroedinger external_orc)
+
+set(X264_URI http://download.videolan.org/pub/videolan/x264/snapshots/x264-snapshot-20160401-2245-stable.tar.bz2)
+set(X264_HASH 1e9a7b835e80313aade53a9b6ff353e099de3856bf5f30a4d8dfc91281f786f5)
+ExternalProject_Add(external_x264
+  URL ${X264_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH SHA256=${X264_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/x264
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/x264/src/external_x264/ && set CFLAGS=-g && set LDFLAGS=-Wl,--as-needed -static-libgcc && sh ./configure --prefix=${LIBDIR}/x264 --enable-static --enable-win32thread --disable-lavf  --cross-prefix=x86_64-w64-mingw32- --host=x86_64-w64-mingw32
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/x264/src/external_x264/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/x264/src/external_x264/ && make install
+  INSTALL_DIR ${LIBDIR}/x264
+)
+
+
+set(XVIDCORE_VERSION 1.3.4)
+set(XVIDCORE_URI http://downloads.xvid.org/downloads/xvidcore-${XVIDCORE_VERSION}.tar.gz)
+set(XVIDCORE_HASH 4e9fd62728885855bc5007fe1be58df42e5e274497591fec37249e1052ae316f)
+ExternalProject_Add(external_xvidcore
+  URL ${XVIDCORE_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH SHA256=${XVIDCORE_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/xvidcore
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/xvidcore/src/external_xvidcore/build/generic && set CFLAGS=-g && set LDFLAGS=-Wl,--as-needed -static-libgcc && sh ./configure --prefix=${LIBDIR}/xvidcore --host=x86_64-w64-mingw32
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/xvidcore/src/external_xvidcore/build/generic && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/xvidcore/src/external_xvidcore/build/generic && make install
+  INSTALL_DIR ${LIBDIR}/xvidcore
+)
+
+#ffmpeg does not recognize 2.1 currently 
+set(OPENJPEG_VERSION 2.0)
+set(OPENJPEG_URI https://github.com/uclouvain/openjpeg/archive/version.${OPENJPEG_VERSION}.tar.gz)
+set(OPENJPEG_HASH 5480f801a9f88af1a456145e41f3adede1dfae425bbac66a19c7eeeba94a1249)
+set(OPENJPEG_EXTRA_ARGS 
+	-DBUILD_SHARED_LIBS=Off
+)
+ExternalProject_Add(external_openjpeg
+  URL ${OPENJPEG_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH SHA256=${OPENJPEG_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/openjpeg
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/openjpeg/src/external_openjpeg-build && ${CMAKE_COMMAND} -G "MSYS Makefiles" -DCMAKE_INSTALL_PREFIX=${LIBDIR}/openjpeg -DBUILD_SHARED_LIBS=Off -DBUILD_THIRDPARTY=On ${CMAKE_CURRENT_BINARY_DIR}/build/openjpeg/src/external_openjpeg
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/openjpeg/src/external_openjpeg-build/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/openjpeg/src/external_openjpeg-build/ && make install
+  INSTALL_DIR ${LIBDIR}/openjpeg
+)
+
+
+set(FAAD_VERSION 2-2.7)
+set(FAAD_URI http://downloads.sourceforge.net/faac/faad${FAAD_VERSION}.tar.bz2)
+set(FAAD_HASH 4c332fa23febc0e4648064685a3d4332)
+set(FAAD_EXTRA_ARGS  )
+ExternalProject_Add(external_faad
+  URL ${FAAD_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${FAAD_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/faad
+  PATCH_COMMAND ${PATCH_CMD} --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/faad/src/external_faad < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/libfaad.diff 
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/faad/src/external_faad/ && set CFLAGS=-g && set LDFLAGS=-Wl,--as-needed -static-libgcc && sh ./configure --disable-shared --enable-static --prefix=${LIBDIR}/faad
+  BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/faad/src/external_faad/ && make 
+  INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/faad/src/external_faad/ && make install
+  INSTALL_DIR ${LIBDIR}/faad
+)
+
 set(FFMPEG_VERSION 3.0)
 set(FFMPEG_URI http://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.bz2)
 set(FFMPEG_HASH 026859cc76dddffd809cad879db07658)
@@ -1032,13 +1305,57 @@ ExternalProject_Add(external_ffmpeg
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   URL_HASH MD5=${FFMPEG_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg
-  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg/src/external_ffmpeg/ && sh ./configure --toolchain=msvc --enable-shared --disable-static --disable-avfilter --disable-vdpau  --disable-bzlib --disable-libgsm --disable-libspeex --prefix=${LIBDIR}/ffmpeg
+  CONFIGURE_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && 
+				    call ming64sh.cmd && 
+					cd ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg/src/external_ffmpeg/ && 
+					set CFLAGS=-I${mingw_LIBDIR}/lame/include -I${mingw_LIBDIR}/openjpeg/include/ -I${mingw_LIBDIR}/ogg/include -I${mingw_LIBDIR}/vorbis/include -I${mingw_LIBDIR}/theora/include -I${mingw_LIBDIR}/vpx/include -I${mingw_LIBDIR}/x264/include -I${mingw_LIBDIR}/xvidcore/include -I${mingw_LIBDIR}/dirac/include/dirac -I${mingw_LIBDIR}/schroedinger/include/schroedinger-1.0 -I${mingw_LIBDIR}/zlib/include &&
+					set LDFLAGS=-L${mingw_LIBDIR}/lame/lib -L${mingw_LIBDIR}/openjpeg/lib -L${mingw_LIBDIR}/ogg/lib -L${mingw_LIBDIR}/vorbis/lib -L${mingw_LIBDIR}/theora/lib -L${mingw_LIBDIR}/vpx/lib -L${mingw_LIBDIR}/x264/lib -L${mingw_LIBDIR}/xvidcore/lib -L${mingw_LIBDIR}/dirac/lib -L${mingw_LIBDIR}/schroedinger/lib -L${mingw_LIBDIR}/orc/lib -L${mingw_LIBDIR}/zlib/lib &&
+					set PKG_CONFIG_PATH=${mingw_LIBDIR}/schroedinger/lib/pkgconfig:${mingw_LIBDIR}/orc/lib/pkgconfig:${mingw_LIBDIR} &&
+		sh ./configure 
+		--enable-shared 
+		--disable-static 
+		--disable-avfilter 
+		--disable-vdpau  
+		--disable-bzlib 
+		--disable-libgsm 
+		--disable-libspeex 
+		--enable-libvpx 
+		--prefix=${LIBDIR}/ffmpeg 
+		--enable-libschroedinger 
+		--enable-libtheora 
+		--enable-libvorbis 
+		--enable-zlib 
+		--enable-stripping 
+		--enable-runtime-cpudetect 
+		--disable-vaapi 
+		--enable-libopenjpeg 
+		--disable-nonfree 
+		--enable-gpl 
+		--disable-postproc 
+		--disable-x11grab 
+		--enable-libmp3lame 
+		--disable-librtmp 
+		--enable-libx264 
+		--enable-libxvid 
+		--disable-libopencore-amrnb 
+		--disable-libopencore-amrwb 
+		--disable-libdc1394 
+		--disable-version3 
+		--disable-debug 
+		--enable-optimizations 
+		--disable-sse 
+		--disable-ssse3 
+		--enable-ffplay 
+		--enable-w32threads 
+		--disable-pthreads 
   PATCH_COMMAND ${PATCH_CMD} --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg/src/external_ffmpeg < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/ffmpeg.diff 
   BUILD_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg/src/external_ffmpeg/ && make 
   INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/ffmpeg/src/external_ffmpeg/ && make install
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/ffmpeg ${DEFAULT_C_FLAGS} ${FFMPEG_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/ffmpeg
-)
+)  
+
+add_dependencies(external_ffmpeg external_faad external_openjpeg external_xvidcore external_x264 external_schroedinger external_vpx external_theora external_vorbis external_ogg external_lame)
 
 set(FFTW_VERSION 3.3.4)
 set(FFTW_URI http://www.fftw.org/fftw-${FFTW_VERSION}.tar.gz)
