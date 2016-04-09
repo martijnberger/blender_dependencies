@@ -62,15 +62,15 @@ if %ERRORLEVEL% NEQ 0 (
 set path=%BLENDER_DIR%\mingw\mingw64\msys\1.0\bin\;%path%
 mkdir %BuildDir%_Release
 cd %BuildDir%_Release
-cmake -G "%CMAKE_BUILDER%" .. -DBUILD_MODE=Release -DHARVEST_TARGET=%BLENDER_DIR%/Win64_vc%VSVER_SHORT%/
-msbuild /m "Blender External Dependencies.sln" /p:Configuration=Release /fl /flp:logfile=BlenderDeps.log
+cmake -G "%CMAKE_BUILDER%" .. -DBUILD_MODE=Release -DHARVEST_TARGET=%BLENDER_DIR%/Win64_vc%VSVER_SHORT%/ --graphviz=deps_release.dot
+msbuild /m "Blender External Dependencies.sln" /p:Configuration=Release /fl /flp:logfile=BlenderDeps.log 
 rem osl fails to build the first time, don't have the time to figure out why so just build twice
 msbuild /m "Blender External Dependencies.sln" /p:Configuration=Release /fl /flp:logfile=BlenderDepsOsl.log
 cmake --build . --target Harvest_Release_Results
 cd ..
 mkdir %BuildDir%_Debug
 cd %BuildDir%_Debug
-cmake -G "%CMAKE_BUILDER%" .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_MODE=Debug -DHARVEST_TARGET=%BLENDER_DIR%/Win64_vc%VSVER_SHORT%/
+cmake -G "%CMAKE_BUILDER%" .. -DCMAKE_BUILD_TYPE=Debug -DBUILD_MODE=Debug -DHARVEST_TARGET=%BLENDER_DIR%/Win64_vc%VSVER_SHORT%/ --graphviz=deps_debug.dot
 msbuild /m "Blender External Dependencies.sln" /p:Configuration=Debug /fl /flp:logfile=BlenderDeps.log
 rem osl fails to build the first time, don't have the time to figure out why so just build twice
 msbuild /m "Blender External Dependencies.sln" /p:Configuration=Debug /fl /flp:logfile=BlenderDepsOsl.log
