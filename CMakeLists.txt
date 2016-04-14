@@ -968,6 +968,27 @@ if ( (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/mingw64env.cmd") AND
     )
 endif()
 
+Message("Checking for nasm")
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/nasm-2.12.01-win64.zip")
+	Message("Downloading nasm")
+    file(DOWNLOAD "http://www.nasm.us/pub/nasm/releasebuilds/2.12.01/win64/nasm-2.12.01-win64.zip" "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/nasm-2.12.01-win64.zip")
+endif()
+
+#extract nasm
+if ( (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/nasm.exe") AND (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/nasm-2.12.01-win64.zip") )
+    Message("Extracting nasm")
+	EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} -E tar jxf "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/nasm-2.12.01-win64.zip"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+    )
+	EXECUTE_PROCESS(
+		COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/nasm-2.12.01/nasm.exe" "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/nasm.exe"
+    )	
+
+endif()
+
+
+
 Message("Checking for mingwGet")
 if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip")
 	Message("Downloading mingw-get")
