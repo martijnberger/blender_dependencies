@@ -1303,6 +1303,11 @@ ExternalProject_Add(external_xvidcore
   INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/xvidcore/src/external_xvidcore/build/generic && make install
   INSTALL_DIR ${LIBDIR}/xvidcore
 )
+ ExternalProject_Add_Step(external_xvidcore after_install
+ COMMAND ${CMAKE_COMMAND} -E rename ${LIBDIR}/xvidcore/lib/xvidcore.a  ${LIBDIR}/xvidcore/lib/libxvidcore.a
+ COMMAND ${CMAKE_COMMAND} -E remove ${LIBDIR}/xvidcore/lib/xvidcore.dll.a
+ DEPENDEES install
+  )
 
 #ffmpeg does not recognize 2.1 currently 
 set(OPENJPEG_VERSION 2.0)
