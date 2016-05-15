@@ -39,3 +39,16 @@
  Libs.private: @PTHREAD_LIBS@ @LIBM@
  Cflags: -I${includedir}
  
+--- ./schroedinger/schrodecoder.c	2012-01-23 00:38:57.000000000 +0100
++++ ./schroedinger/schrodecoder.c	2016-05-15 06:07:24.000000000 +0200
+@@ -70,8 +70,8 @@
+ };
+ 
+ 
+-int _schro_decode_prediction_only;
+-int _schro_telemetry;
++int _schro_decode_prediction_only = 0;
++int _schro_telemetry = 0;
+ 
+ static void schro_decoder_x_decode_motion (SchroAsyncStage * stage);
+ static void schro_decoder_x_render_motion (SchroAsyncStage * stage);
