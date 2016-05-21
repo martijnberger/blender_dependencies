@@ -207,10 +207,12 @@ endif (BUILD_MODE STREQUAL Debug)
 if (MSVC12)
 	set(VCVER 12)
 	set(BOOST_COMPILER_STRING -vc120)
+	set(PYTHON_COMPILER_STRING v120)
 endif()
 if (MSVC14)
 	set(VCVER 14)
 	set(BOOST_COMPILER_STRING -vc140)
+	set(PYTHON_COMPILER_STRING v140)
 endif()
 
 
@@ -242,6 +244,28 @@ ExternalProject_Add(external_boost
   BUILD_COMMAND bjam -j4 architecture=x86 address-model=64 variant=${BOOST_BUILD_TYPE} link=static runtime-link=static threading=multi ${BOOST_OPTIONS}  --prefix=${LIBDIR}/boost install
   BUILD_IN_SOURCE 1
   INSTALL_COMMAND ""
+)
+
+set(PYTHON_VERSION 3.5.1)
+set(PYTHON_URI https://www.python.org/ftp/python/3.5.1/Python-${PYTHON_VERSION}.tar.xz)
+set(PYTHON_HASH e9ea6f2623fffcdd871b7b19113fde80)
+set(PYTHON_POSTFIX )
+if (BUILD_MODE STREQUAL Debug)
+	set (PYTHON_POSTFIX _d)
+endif (BUILD_MODE STREQUAL Debug)
+
+ExternalProject_Add(external_python
+  URL ${PYTHON_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${PYTHON_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/python
+  PATCH_COMMAND ${PATCH_CMD}  --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/python.diff 
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND cd ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/ && call build.bat -p x64 -c ${BUILD_MODE} -k ${PYTHON_COMPILER_STRING}
+  INSTALL_COMMAND COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/python35${PYTHON_POSTFIX}.dll ${LIBDIR}/python/lib/python35${PYTHON_POSTFIX}.dll && 
+                          ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/python35${PYTHON_POSTFIX}.lib ${LIBDIR}/python/lib/python35${PYTHON_POSTFIX}.lib && 
+					   	  ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/python35${PYTHON_POSTFIX}.exp ${LIBDIR}/python/lib/python35${PYTHON_POSTFIX}.exp &&
+						  ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/include ${LIBDIR}/python/include 
 )
 
 if (BUILD_MODE STREQUAL Release)
@@ -1547,8 +1571,8 @@ add_custom_target( Harvest_Release_Results
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/iconv/lib/libiconv.a ${HARVEST_TARGET}/iconv/lib/iconv.lib &&
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/iconv/include/iconv.h ${HARVEST_TARGET}/iconv/include/iconv.h &&
 #opencolorIO 
-								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opencolorio/ ${HARVEST_TARGET}/opencolorio &&
-								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencolorio/lib/OpenColorIO.dll ${HARVEST_TARGET}/opencolorio/bin/OpenColorIO.dll &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/OpenColorIO/ ${HARVEST_TARGET}/opencolorio &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/OpenColorIO/lib/OpenColorIO.dll ${HARVEST_TARGET}/opencolorio/bin/OpenColorIO.dll &&
 #Osl
 								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/osl/ ${HARVEST_TARGET}/osl &&
 #OpenVDB
@@ -1564,7 +1588,9 @@ add_custom_target( Harvest_Release_Results
 #opencollada
 								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opencollada/ ${HARVEST_TARGET}/opencollada/ &&
 #opensubdiv
-								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opensubdiv ${HARVEST_TARGET}/opensubdiv
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opensubdiv ${HARVEST_TARGET}/opensubdiv &&
+#python 
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/python/ ${HARVEST_TARGET}/python/   
 
 								DEPENDS )
 endif (BUILD_MODE STREQUAL Release)
@@ -1610,7 +1636,9 @@ add_custom_target( Harvest_Debug_Results
 #tbb
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/tbb/lib/tbb_static.lib ${HARVEST_TARGET}/tbb/lib/tbb_debug.lib &&
 #openvdb
-								${CMAKE_COMMAND} -E copy ${LIBDIR}/openvdb/lib/openvdb.lib ${HARVEST_TARGET}/openvdb/lib/openvdb_d.lib 
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/openvdb/lib/openvdb.lib ${HARVEST_TARGET}/openvdb/lib/openvdb_d.lib && 
+#python 
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/python/ ${HARVEST_TARGET}/python/   
 							
 )
 endif (BUILD_MODE STREQUAL Debug)
