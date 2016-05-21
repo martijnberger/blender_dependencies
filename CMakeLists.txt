@@ -207,10 +207,12 @@ endif (BUILD_MODE STREQUAL Debug)
 if (MSVC12)
 	set(VCVER 12)
 	set(BOOST_COMPILER_STRING -vc120)
+	set(PYTHON_COMPILER_STRING v120)
 endif()
 if (MSVC14)
 	set(VCVER 14)
 	set(BOOST_COMPILER_STRING -vc140)
+	set(PYTHON_COMPILER_STRING v140)
 endif()
 
 
@@ -242,6 +244,28 @@ ExternalProject_Add(external_boost
   BUILD_COMMAND bjam -j4 architecture=x86 address-model=64 variant=${BOOST_BUILD_TYPE} link=static runtime-link=static threading=multi ${BOOST_OPTIONS}  --prefix=${LIBDIR}/boost install
   BUILD_IN_SOURCE 1
   INSTALL_COMMAND ""
+)
+
+set(PYTHON_VERSION 3.5.1)
+set(PYTHON_URI https://www.python.org/ftp/python/3.5.1/Python-${PYTHON_VERSION}.tar.xz)
+set(PYTHON_HASH e9ea6f2623fffcdd871b7b19113fde80)
+set(PYTHON_POSTFIX )
+if (BUILD_MODE STREQUAL Debug)
+	set (PYTHON_POSTFIX _d)
+endif (BUILD_MODE STREQUAL Debug)
+
+ExternalProject_Add(external_python
+  URL ${PYTHON_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${PYTHON_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/python
+  PATCH_COMMAND ${PATCH_CMD}  --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/python.diff 
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND cd ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/ && call build.bat -p x64 -c ${BUILD_MODE} -k ${PYTHON_COMPILER_STRING}
+  INSTALL_COMMAND COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/python35${PYTHON_POSTFIX}.dll ${LIBDIR}/python/lib/python35${PYTHON_POSTFIX}.dll && 
+                          ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/python35${PYTHON_POSTFIX}.lib ${LIBDIR}/python/lib/python35${PYTHON_POSTFIX}.lib && 
+					   	  ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/python35${PYTHON_POSTFIX}.exp ${LIBDIR}/python/lib/python35${PYTHON_POSTFIX}.exp &&
+						  ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/include ${LIBDIR}/python/include 
 )
 
 if (BUILD_MODE STREQUAL Release)
@@ -968,6 +992,50 @@ if ( (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/mingw64env.cmd") AND
     )
 endif()
 
+Message("Checking for pkg-config")
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/pkg-config-lite-0.28-1_bin-win32.zip")
+	Message("Downloading pkg-config")
+    file(DOWNLOAD "http://heanet.dl.sourceforge.net/project/pkgconfiglite/0.28-1/pkg-config-lite-0.28-1_bin-win32.zip" "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/pkg-config-lite-0.28-1_bin-win32.zip")
+endif()
+
+#extract pkgconfig
+if ( (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/pkg-config.exe") AND (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/pkg-config-lite-0.28-1_bin-win32.zip") )
+    Message("Extracting pkg-config")
+	EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} -E tar jxf "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/pkg-config-lite-0.28-1_bin-win32.zip"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+    )
+
+	EXECUTE_PROCESS(
+		COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/pkg-config-lite-0.28-1/bin/pkg-config.exe" "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/pkg-config.exe"
+    )	
+
+endif()
+
+
+
+
+Message("Checking for nasm")
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/nasm-2.12.01-win64.zip")
+	Message("Downloading nasm")
+    file(DOWNLOAD "http://www.nasm.us/pub/nasm/releasebuilds/2.12.01/win64/nasm-2.12.01-win64.zip" "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/nasm-2.12.01-win64.zip")
+endif()
+
+#extract nasm
+if ( (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/nasm.exe") AND (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/nasm-2.12.01-win64.zip") )
+    Message("Extracting nasm")
+	EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} -E tar jxf "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/nasm-2.12.01-win64.zip"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+    )
+	EXECUTE_PROCESS(
+		COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/nasm-2.12.01/nasm.exe" "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/nasm.exe"
+    )	
+
+endif()
+
+
+
 Message("Checking for mingwGet")
 if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip")
 	Message("Downloading mingw-get")
@@ -1259,6 +1327,11 @@ ExternalProject_Add(external_xvidcore
   INSTALL_COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64 && call ming64sh.cmd && set path && cd ${CMAKE_CURRENT_BINARY_DIR}/build/xvidcore/src/external_xvidcore/build/generic && make install
   INSTALL_DIR ${LIBDIR}/xvidcore
 )
+ ExternalProject_Add_Step(external_xvidcore after_install
+ COMMAND ${CMAKE_COMMAND} -E rename ${LIBDIR}/xvidcore/lib/xvidcore.a  ${LIBDIR}/xvidcore/lib/libxvidcore.a
+ COMMAND ${CMAKE_COMMAND} -E remove ${LIBDIR}/xvidcore/lib/xvidcore.dll.a
+ DEPENDEES install
+  )
 
 #ffmpeg does not recognize 2.1 currently 
 set(OPENJPEG_VERSION 2.0)
@@ -1436,7 +1509,7 @@ endif(ENABLE_MINGW64)
 
 
 if(NOT DEFINED HARVEST_TARGET)
-set(HARVEST_TARGET ${CMAKE_CURRENT_SOURCE_DIR}\Harvest )
+set(HARVEST_TARGET ${CMAKE_CURRENT_SOURCE_DIR}/Harvest )
 endif()
 message("HARVEST_TARGET = ${HARVEST_TARGET}")
 
@@ -1498,8 +1571,8 @@ add_custom_target( Harvest_Release_Results
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/iconv/lib/libiconv.a ${HARVEST_TARGET}/iconv/lib/iconv.lib &&
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/iconv/include/iconv.h ${HARVEST_TARGET}/iconv/include/iconv.h &&
 #opencolorIO 
-								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opencolorio/ ${HARVEST_TARGET}/opencolorio &&
-								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencolorio/lib/OpenColorIO.dll ${HARVEST_TARGET}/opencolorio/bin/OpenColorIO.dll &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/OpenColorIO/ ${HARVEST_TARGET}/opencolorio &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/OpenColorIO/lib/OpenColorIO.dll ${HARVEST_TARGET}/opencolorio/bin/OpenColorIO.dll &&
 #Osl
 								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/osl/ ${HARVEST_TARGET}/osl &&
 #OpenVDB
@@ -1515,7 +1588,9 @@ add_custom_target( Harvest_Release_Results
 #opencollada
 								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opencollada/ ${HARVEST_TARGET}/opencollada/ &&
 #opensubdiv
-								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opensubdiv ${HARVEST_TARGET}/opensubdiv
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opensubdiv ${HARVEST_TARGET}/opensubdiv &&
+#python 
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/python/ ${HARVEST_TARGET}/python/   
 
 								DEPENDS )
 endif (BUILD_MODE STREQUAL Release)
@@ -1561,7 +1636,9 @@ add_custom_target( Harvest_Debug_Results
 #tbb
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/tbb/lib/tbb_static.lib ${HARVEST_TARGET}/tbb/lib/tbb_debug.lib &&
 #openvdb
-								${CMAKE_COMMAND} -E copy ${LIBDIR}/openvdb/lib/openvdb.lib ${HARVEST_TARGET}/openvdb/lib/openvdb_d.lib 
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/openvdb/lib/openvdb.lib ${HARVEST_TARGET}/openvdb/lib/openvdb_d.lib && 
+#python 
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/python/ ${HARVEST_TARGET}/python/   
 							
 )
 endif (BUILD_MODE STREQUAL Debug)

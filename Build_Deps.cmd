@@ -59,7 +59,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 
-set path=%BLENDER_DIR%\mingw\mingw64\msys\1.0\bin\;%path%
+set path=%BLENDER_DIR%\mingw\mingw64\msys\1.0\bin\;%BLENDER_DIR%\nasm-2.12.01\;%path%
 mkdir %BuildDir%_Release
 cd %BuildDir%_Release
 cmake -G "%CMAKE_BUILDER%" .. -DBUILD_MODE=Release -DHARVEST_TARGET=%BLENDER_DIR%/Win64_vc%VSVER_SHORT%/ --graphviz=deps_release.dot
