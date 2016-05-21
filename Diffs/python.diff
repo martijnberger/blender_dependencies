@@ -1,0 +1,28 @@
+--- pcbuild/build.bat   2016-05-21 09:53:55 -0600
++++ pcbuild/build.bat   2016-05-21 09:56:16 -0600
+@@ -59,6 +59,7 @@
+ if "%~1"=="-h" goto Usage
+ if "%~1"=="-c" (set conf=%2) & shift & shift & goto CheckOpts
+ if "%~1"=="-p" (set platf=%2) & shift & shift & goto CheckOpts
++if "%~1"=="-k" (set vs_toolset=%2) & shift & shift & goto CheckOpts
+ if "%~1"=="-r" (set target=Rebuild) & shift & goto CheckOpts
+ if "%~1"=="-t" (set target=%2) & shift & shift & goto CheckOpts
+ if "%~1"=="-d" (set conf=Debug) & shift & goto CheckOpts
+@@ -87,7 +88,7 @@
+ call "%dir%env.bat" %vs_platf% >nul
+
+ if "%kill%"=="true" (
+-    msbuild /v:m /nologo /target:KillPython "%dir%\pythoncore.vcxproj" /p:Configuration=%conf% /p:Platform=%platf% /p:KillPython=true
++    msbuild /v:m /nologo /target:KillPython "%dir%\pythoncore.vcxproj" /p:Configuration=%conf% /p:Platform=%platf% /p:PlatformToolset=%vs_toolset% /p:KillPython=true
+ )
+
+ rem Call on MSBuild to do the work, echo the command.
+@@ -95,7 +96,7 @@
+ rem batch is, shall we say, "lackluster"
+ echo on
+ msbuild "%dir%pcbuild.proj" /t:%target% %parallel% %verbose%^
+- /p:Configuration=%conf% /p:Platform=%platf%^
++ /p:Configuration=%conf% /p:Platform=%platf% /p:PlatformToolset=%vs_toolset%^
+  /p:IncludeExternals=%IncludeExternals%^
+  /p:IncludeSSL=%IncludeSSL% /p:IncludeTkinter=%IncludeTkinter%^
+  /p:UseTestMarker=%UseTestMarker%^
