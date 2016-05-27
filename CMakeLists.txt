@@ -546,21 +546,6 @@ ExternalProject_Add(external_hdf5
   INSTALL_DIR ${LIBDIR}/hdf5
 )
 
-set(HDF5_VERSION 1.8.17)
-set(HDF5_URI http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-${HDF5_VERSION}.zip )
-set(HDF5_HASH be2642d976b49d6cc60a32b0bd8f829a ) 
-set(HDF5_EXTRA_ARGS  
-)
-
-ExternalProject_Add(external_hdf5
-  URL ${HDF5_URI}
-  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
-  URL_HASH MD5=${HDF5_HASH}
-  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/hdf5
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/hdf5 ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${HDF5_EXTRA_ARGS}
-  INSTALL_DIR ${LIBDIR}/hdf5
-)
-
 set(ALEMBIC_GIT_URI https://github.com/alembic/alembic.git )
 set(ALEMBIC_GIT_UID 16f4ed6843f2b39d08c02338e0747f4dbcf8be20 ) 
 set(ALEMBIC_EXTRA_ARGS  
