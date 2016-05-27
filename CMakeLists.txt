@@ -540,6 +540,7 @@ set(HDF5_VERSION 1.8.17)
 set(HDF5_URI http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-${HDF5_VERSION}.zip )
 set(HDF5_HASH be2642d976b49d6cc60a32b0bd8f829a ) 
 set(HDF5_EXTRA_ARGS  
+	-HDF5_ENABLE_THREADSAFE=On
 )
 
 ExternalProject_Add(external_hdf5
