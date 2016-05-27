@@ -524,7 +524,6 @@ ExternalProject_Add(external_freeglut
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   URL_HASH MD5=${FREEGLUT_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/freeglut
-
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/freeglut ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${FREEGLUT_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/freeglut
 )
@@ -536,6 +535,21 @@ set(HDF5_URI http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-${HDF5_VERSION}.z
 set(HDF5_HASH be2642d976b49d6cc60a32b0bd8f829a ) 
 set(HDF5_EXTRA_ARGS  
 	-HDF5_ENABLE_THREADSAFE=On
+)
+
+ExternalProject_Add(external_hdf5
+  URL ${HDF5_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${HDF5_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/hdf5
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/hdf5 ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${HDF5_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/hdf5
+)
+
+set(HDF5_VERSION 1.8.17)
+set(HDF5_URI http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-${HDF5_VERSION}.zip )
+set(HDF5_HASH be2642d976b49d6cc60a32b0bd8f829a ) 
+set(HDF5_EXTRA_ARGS  
 )
 
 ExternalProject_Add(external_hdf5
