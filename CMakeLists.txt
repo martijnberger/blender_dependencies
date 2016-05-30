@@ -342,6 +342,12 @@ set(BOOST_OPTIONS --with-filesystem
 				  ${BOOST_TOOLSET})
 string(TOLOWER ${BUILD_MODE} BOOST_BUILD_TYPE)
 
+if ( "${CMAKE_SIZEOF_VOID_P}" EQUAL "8" )
+	set(BOOST_ADDRESS_MODEL 64)
+else()
+	set(BOOST_ADDRESS_MODEL 32)
+endif()
+
 ExternalProject_Add(external_boost
   URL ${BOOST_URI}
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
@@ -349,7 +355,7 @@ ExternalProject_Add(external_boost
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/boost
   UPDATE_COMMAND  ""
   CONFIGURE_COMMAND ${BOOST_CONFIGURE_COMMAND}
-  BUILD_COMMAND ${BOOST_BUILD_COMMAND} ${BOOST_BUILD_OPTIONS} -j${MAKE_THREADS} architecture=x86 address-model=64 variant=${BOOST_BUILD_TYPE} link=static runtime-link=static threading=multi ${BOOST_OPTIONS}  --prefix=${LIBDIR}/boost install
+  BUILD_COMMAND ${BOOST_BUILD_COMMAND} ${BOOST_BUILD_OPTIONS} -j${MAKE_THREADS} architecture=x86 address-model=${BOOST_ADDRESS_MODEL} variant=${BOOST_BUILD_TYPE} link=static runtime-link=static threading=multi ${BOOST_OPTIONS}  --prefix=${LIBDIR}/boost install
   BUILD_IN_SOURCE 1
   INSTALL_COMMAND ""
 )
@@ -530,11 +536,20 @@ ExternalProject_Add(external_freeglut
 endif (BUILD_MODE STREQUAL Release)
 endif (WIN32)
 
-set(HDF5_VERSION 1.8.17)
-set(HDF5_URI http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-${HDF5_VERSION}.zip )
-set(HDF5_HASH be2642d976b49d6cc60a32b0bd8f829a ) 
+#set(HDF5_VERSION 1.8.17)
+#set(HDF5_URI http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-${HDF5_VERSION}.zip )
+
+set(HDF5_URI http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.0-patch1/src/hdf5-1.10.0-patch1.tar.gz )
+set(HDF5_HASH 9180ff0ef8dc2ef3f61bd37a7404f295 ) 
 set(HDF5_EXTRA_ARGS  
-	-HDF5_ENABLE_THREADSAFE=On
+	-DHDF5_ENABLE_THREADSAFE=On
+	-DHDF5_BUILD_CPP_LIB=Off
+	-DBUILD_TESTING=Off
+	-DHDF5_BUILD_TOOLS=Off
+	-DHDF5_BUILD_EXAMPLES=Off
+	-DHDF5_BUILD_HL_LIB=OFf
+	-DBUILD_STATIC_CRT_LIBS=On
+	-DBUILD_SHARED_LIBS=On
 )
 
 ExternalProject_Add(external_hdf5
@@ -542,12 +557,15 @@ ExternalProject_Add(external_hdf5
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   URL_HASH MD5=${HDF5_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/hdf5
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/hdf5 ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${HDF5_EXTRA_ARGS}
+  PATCH_COMMAND ${PATCH_CMD} --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/hdf5/src/external_hdf5 < ${CMAKE_CURRENT_SOURCE_DIR}/Diffs/hdf5.diff 
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/hdf5 ${DEFAULT_CMAKE_FLAGS} ${HDF5_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/hdf5
 )
 
-set(ALEMBIC_GIT_URI https://github.com/alembic/alembic.git )
-set(ALEMBIC_GIT_UID 16f4ed6843f2b39d08c02338e0747f4dbcf8be20 ) 
+
+set(ALEMBIC_GIT_UID d28388e262d05d35318d148c48e765b47e8c1943 ) 
+set(ALEMBIC_URI https://github.com/alembic/alembic/archive/${ALEMBIC_GIT_UID}.zip )
+set(ALEMBIC_MD5 8277d331c9fe921c6711a82fe08a5faf ) 
 set(ALEMBIC_EXTRA_ARGS  
  -DBUILDSTATIC=ON 
  -DLINKSTATIC=ON 
@@ -568,10 +586,11 @@ set(ALEMBIC_EXTRA_ARGS
  -DUSE_MAYA=0
  -DUSE_PRMAN=0
  -DUSE_HDF5=On
- -DUSE_STATIC_HDF5=On
+ -DUSE_STATIC_HDF5=Off
  -DHDF5_ROOT=${LIBDIR}/hdf5
  -DUSE_TESTS=Off
  -DALEMBIC_NO_OPENGL=1 
+ -DUSE_BINARIES=On
  -DALEMBIC_ILMBASE_LINK_STATIC=On
  -DALEMBIC_SHARED_LIBS=OFF 
  -DGLUT_INCLUDE_DIR="" 
@@ -580,10 +599,11 @@ set(ALEMBIC_EXTRA_ARGS
  )
 
 ExternalProject_Add(external_alembic
-  GIT_REPOSITORY ${ALEMBIC_GIT_URI}
-  GIT_TAG ${ALEMBIC_GIT_UID}
+  URL ${ALEMBIC_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${ALEMBIC_MD5}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/alembic
-  PATCH_COMMAND git checkout . && ${PATCH_CMD} --verbose -p 1 -N -d ${CMAKE_CURRENT_BINARY_DIR}/build/alembic/src/external_alembic < ${CMAKE_CURRENT_SOURCE_DIR}/Diffs/alembic.diff 
+  PATCH_COMMAND ${PATCH_CMD} --verbose -p 1 -N -d ${CMAKE_CURRENT_BINARY_DIR}/build/alembic/src/external_alembic < ${CMAKE_CURRENT_SOURCE_DIR}/Diffs/alembic.diff 
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/alembic -Wno-dev ${DEFAULT_CMAKE_FLAGS} ${ALEMBIC_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/alembic
 )
@@ -812,6 +832,7 @@ ExternalProject_Add(external_llvm
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   URL_HASH MD5=${LLVM_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/llvm
+  PATCH_COMMAND ${PATCH_CMD} -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/llvm/src/external_llvm < ${CMAKE_CURRENT_SOURCE_DIR}/Diffs/llvm-alloca-fix.patch.patch
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/llvm ${DEFAULT_CMAKE_FLAGS} ${LLVM_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/llvm
 )
@@ -946,10 +967,14 @@ ExternalProject_Add(external_flexbison
 set(OSL_VERSION 1.7.2)
 set(OSL_URI https://github.com/imageworks/OpenShadingLanguage/archive/Release-${OSL_VERSION}.zip)
 set(OSL_HASH f18c2ca1eb98e2c27e7d6c8c1e8b4053)
+set(OSL_SIMD sse2)
 if(WIN32)
 	set(OSL_CMAKE_CXX_STANDARD_LIBRARIES "kernel32${LIBEXT} user32${LIBEXT} gdi32${LIBEXT} winspool${LIBEXT} shell32${LIBEXT} ole32${LIBEXT} oleaut32${LIBEXT} uuid${LIBEXT} comdlg32${LIBEXT} advapi32${LIBEXT} psapi${LIBEXT}")
 	set(OSL_FLEX_BISON -DFLEX_EXECUTABLE=${LIBDIR}/flexbison/win_flex.exe -DFLEX_EXTRA_OPTIONS="--wincompat" -DBISON_EXECUTABLE=${LIBDIR}/flexbison/win_bison.exe)
 	set(OSL_OPENIMAGEIO_LIBRARY "${LIBDIR}/openimageio/lib/${LIBPREFIX}OpenImageIO${LIBEXT};${LIBDIR}/openimageio/lib/${LIBPREFIX}OpenImageIO_Util${LIBEXT};${LIBDIR}/png/lib/libpng16${LIBEXT};${LIBDIR}/jpg/lib/${LIBPREFIX}jpeg${LIBEXT};${LIBDIR}/tiff/lib/${LIBPREFIX}tiff${LIBEXT};${LIBDIR}/openexr/lib/${LIBPREFIX}IlmImf-2_2${LIBEXT}")
+	if ( "${CMAKE_SIZEOF_VOID_P}" EQUAL "4" )
+	set(OSL_SIMD 0)
+	endif()
 else()
 	set(OSL_CMAKE_CXX_STANDARD_LIBRARIES)
 	set(OSL_FLEX_BISON)
@@ -977,7 +1002,7 @@ set(OSL_EXTRA_ARGS
 	-DOPENEXR_IEX_LIBRARY=${LIBDIR}/ilmbase/lib/${LIBPREFIX}Iex-2_2${LIBEXT}
 	-DOPENEXR_INCLUDE_DIR=${LIBDIR}/openexr/include/
 	-DOPENEXR_ILMIMF_LIBRARY=${LIBDIR}/openexr/lib/${LIBPREFIX}IlmImf-2_2${LIBEXT}
-	-USE_SIMD=sse2  
+	-DUSE_SIMD=${OSL_SIMD} 
 	-DOSL_BUILD_TESTS=OFF 
 	-DZLIB_LIBRARY=${LIBDIR}/zlib/lib/${ZLIB_LIBRARY}
 	-DZLIB_INCLUDE_DIR=${LIBDIR}/zlib/include/
