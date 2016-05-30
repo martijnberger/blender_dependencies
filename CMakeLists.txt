@@ -307,10 +307,12 @@ if(WIN32)
 	if (MSVC12)
 		set(BOOST_TOOLSET toolset=msvc-12.0)
 		set(BOOST_COMPILER_STRING -vc120)
+		set(PYTHON_COMPILER_STRING v120)
 	endif()
 	if (MSVC14)
 		set(BOOST_TOOLSET toolset=msvc-14.0)
 		set(BOOST_COMPILER_STRING -vc140)
+		set(PYTHON_COMPILER_STRING v140)
 	endif()
 	set(BOOST_CONFIGURE_COMMAND bootstrap.bat)
 	set(BOOST_BUILD_COMMAND bjam)
@@ -320,7 +322,6 @@ else()
 	set(BOOST_BUILD_COMMAND ./bjam)
 	set(BOOST_BUILD_OPTIONS toolset=clang cxxflags=${PLATFORM_CXXFLAGS} linkflags=${PLATFORM_LDFLAGS})
 endif()
-
 
 set(BOOST_VERSION 1.60.0)
 set(BOOST_VERSION_NODOTS 1_60_0)
@@ -341,6 +342,12 @@ set(BOOST_OPTIONS --with-filesystem
 				  ${BOOST_TOOLSET})
 string(TOLOWER ${BUILD_MODE} BOOST_BUILD_TYPE)
 
+if ( "${CMAKE_SIZEOF_VOID_P}" EQUAL "8" )
+	set(BOOST_ADDRESS_MODEL 64)
+else()
+	set(BOOST_ADDRESS_MODEL 32)
+endif()
+
 ExternalProject_Add(external_boost
   URL ${BOOST_URI}
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
@@ -348,9 +355,31 @@ ExternalProject_Add(external_boost
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/boost
   UPDATE_COMMAND  ""
   CONFIGURE_COMMAND ${BOOST_CONFIGURE_COMMAND}
-  BUILD_COMMAND ${BOOST_BUILD_COMMAND} ${BOOST_BUILD_OPTIONS} -j${MAKE_THREADS} architecture=x86 address-model=64 variant=${BOOST_BUILD_TYPE} link=static runtime-link=static threading=multi ${BOOST_OPTIONS}  --prefix=${LIBDIR}/boost install
+  BUILD_COMMAND ${BOOST_BUILD_COMMAND} ${BOOST_BUILD_OPTIONS} -j${MAKE_THREADS} architecture=x86 address-model=${BOOST_ADDRESS_MODEL} variant=${BOOST_BUILD_TYPE} link=static runtime-link=static threading=multi ${BOOST_OPTIONS}  --prefix=${LIBDIR}/boost install
   BUILD_IN_SOURCE 1
   INSTALL_COMMAND ""
+)
+
+set(PYTHON_VERSION 3.5.1)
+set(PYTHON_URI https://www.python.org/ftp/python/3.5.1/Python-${PYTHON_VERSION}.tar.xz)
+set(PYTHON_HASH e9ea6f2623fffcdd871b7b19113fde80)
+set(PYTHON_POSTFIX )
+if (BUILD_MODE STREQUAL Debug)
+	set (PYTHON_POSTFIX _d)
+endif (BUILD_MODE STREQUAL Debug)
+
+ExternalProject_Add(external_python
+  URL ${PYTHON_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${PYTHON_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/python
+  PATCH_COMMAND ${PATCH_CMD}  --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python < ${CMAKE_CURRENT_SOURCE_DIR}/diffs/python.diff 
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND cd ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/ && call build.bat -p x64 -c ${BUILD_MODE} -k ${PYTHON_COMPILER_STRING}
+  INSTALL_COMMAND COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/python35${PYTHON_POSTFIX}.dll ${LIBDIR}/python/lib/python35${PYTHON_POSTFIX}.dll && 
+                          ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/python35${PYTHON_POSTFIX}.lib ${LIBDIR}/python/lib/python35${PYTHON_POSTFIX}.lib && 
+					   	  ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/python35${PYTHON_POSTFIX}.exp ${LIBDIR}/python/lib/python35${PYTHON_POSTFIX}.exp &&
+						  ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/include ${LIBDIR}/python/include 
 )
 
 if (BUILD_MODE STREQUAL Release)
@@ -501,14 +530,42 @@ ExternalProject_Add(external_freeglut
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   URL_HASH MD5=${FREEGLUT_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/freeglut
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/freeglut ${DEFAULT_CMAKE_FLAGS} ${GLEW_EXTRA_ARGS}
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/freeglut ${DEFAULT_C_FLAGS} ${DEFAULT_CXX_FLAGS} ${FREEGLUT_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/freeglut
 )
 endif (BUILD_MODE STREQUAL Release)
 endif (WIN32)
 
-set(ALEMBIC_GIT_URI https://github.com/alembic/alembic.git )
-set(ALEMBIC_GIT_UID 16f4ed6843f2b39d08c02338e0747f4dbcf8be20 ) 
+#set(HDF5_VERSION 1.8.17)
+#set(HDF5_URI http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-${HDF5_VERSION}.zip )
+
+set(HDF5_URI http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.0-patch1/src/hdf5-1.10.0-patch1.tar.gz )
+set(HDF5_HASH 9180ff0ef8dc2ef3f61bd37a7404f295 ) 
+set(HDF5_EXTRA_ARGS  
+	-DHDF5_ENABLE_THREADSAFE=On
+	-DHDF5_BUILD_CPP_LIB=Off
+	-DBUILD_TESTING=Off
+	-DHDF5_BUILD_TOOLS=Off
+	-DHDF5_BUILD_EXAMPLES=Off
+	-DHDF5_BUILD_HL_LIB=OFf
+	-DBUILD_STATIC_CRT_LIBS=On
+	-DBUILD_SHARED_LIBS=On
+)
+
+ExternalProject_Add(external_hdf5
+  URL ${HDF5_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${HDF5_HASH}
+  PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/hdf5
+  PATCH_COMMAND ${PATCH_CMD} --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/hdf5/src/external_hdf5 < ${CMAKE_CURRENT_SOURCE_DIR}/Diffs/hdf5.diff 
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/hdf5 ${DEFAULT_CMAKE_FLAGS} ${HDF5_EXTRA_ARGS}
+  INSTALL_DIR ${LIBDIR}/hdf5
+)
+
+
+set(ALEMBIC_GIT_UID d28388e262d05d35318d148c48e765b47e8c1943 ) 
+set(ALEMBIC_URI https://github.com/alembic/alembic/archive/${ALEMBIC_GIT_UID}.zip )
+set(ALEMBIC_MD5 8277d331c9fe921c6711a82fe08a5faf ) 
 set(ALEMBIC_EXTRA_ARGS  
  -DBUILDSTATIC=ON 
  -DLINKSTATIC=ON 
@@ -528,9 +585,12 @@ set(ALEMBIC_EXTRA_ARGS
  -DUSE_ARNOLD=0 
  -DUSE_MAYA=0
  -DUSE_PRMAN=0
- -DUSE_HDF5=Off
+ -DUSE_HDF5=On
+ -DUSE_STATIC_HDF5=Off
+ -DHDF5_ROOT=${LIBDIR}/hdf5
  -DUSE_TESTS=Off
  -DALEMBIC_NO_OPENGL=1 
+ -DUSE_BINARIES=On
  -DALEMBIC_ILMBASE_LINK_STATIC=On
  -DALEMBIC_SHARED_LIBS=OFF 
  -DGLUT_INCLUDE_DIR="" 
@@ -539,10 +599,11 @@ set(ALEMBIC_EXTRA_ARGS
  )
 
 ExternalProject_Add(external_alembic
-  GIT_REPOSITORY ${ALEMBIC_GIT_URI}
-  GIT_TAG ${ALEMBIC_GIT_UID}
+  URL ${ALEMBIC_URI}
+  DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
+  URL_HASH MD5=${ALEMBIC_MD5}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/alembic
-  PATCH_COMMAND git checkout . && ${PATCH_CMD} --verbose -p 1 -N -d ${CMAKE_CURRENT_BINARY_DIR}/build/alembic/src/external_alembic < ${CMAKE_CURRENT_SOURCE_DIR}/Diffs/alembic.diff 
+  PATCH_COMMAND ${PATCH_CMD} --verbose -p 1 -N -d ${CMAKE_CURRENT_BINARY_DIR}/build/alembic/src/external_alembic < ${CMAKE_CURRENT_SOURCE_DIR}/Diffs/alembic.diff 
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/alembic -Wno-dev ${DEFAULT_CMAKE_FLAGS} ${ALEMBIC_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/alembic
 )
@@ -771,6 +832,7 @@ ExternalProject_Add(external_llvm
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   URL_HASH MD5=${LLVM_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/llvm
+  PATCH_COMMAND ${PATCH_CMD} -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/llvm/src/external_llvm < ${CMAKE_CURRENT_SOURCE_DIR}/Diffs/llvm-alloca-fix.patch.patch
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/llvm ${DEFAULT_CMAKE_FLAGS} ${LLVM_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/llvm
 )
@@ -905,10 +967,14 @@ ExternalProject_Add(external_flexbison
 set(OSL_VERSION 1.7.2)
 set(OSL_URI https://github.com/imageworks/OpenShadingLanguage/archive/Release-${OSL_VERSION}.zip)
 set(OSL_HASH f18c2ca1eb98e2c27e7d6c8c1e8b4053)
+set(OSL_SIMD sse2)
 if(WIN32)
 	set(OSL_CMAKE_CXX_STANDARD_LIBRARIES "kernel32${LIBEXT} user32${LIBEXT} gdi32${LIBEXT} winspool${LIBEXT} shell32${LIBEXT} ole32${LIBEXT} oleaut32${LIBEXT} uuid${LIBEXT} comdlg32${LIBEXT} advapi32${LIBEXT} psapi${LIBEXT}")
 	set(OSL_FLEX_BISON -DFLEX_EXECUTABLE=${LIBDIR}/flexbison/win_flex.exe -DFLEX_EXTRA_OPTIONS="--wincompat" -DBISON_EXECUTABLE=${LIBDIR}/flexbison/win_bison.exe)
 	set(OSL_OPENIMAGEIO_LIBRARY "${LIBDIR}/openimageio/lib/${LIBPREFIX}OpenImageIO${LIBEXT};${LIBDIR}/openimageio/lib/${LIBPREFIX}OpenImageIO_Util${LIBEXT};${LIBDIR}/png/lib/libpng16${LIBEXT};${LIBDIR}/jpg/lib/${LIBPREFIX}jpeg${LIBEXT};${LIBDIR}/tiff/lib/${LIBPREFIX}tiff${LIBEXT};${LIBDIR}/openexr/lib/${LIBPREFIX}IlmImf-2_2${LIBEXT}")
+	if ( "${CMAKE_SIZEOF_VOID_P}" EQUAL "4" )
+	set(OSL_SIMD 0)
+	endif()
 else()
 	set(OSL_CMAKE_CXX_STANDARD_LIBRARIES)
 	set(OSL_FLEX_BISON)
@@ -936,7 +1002,7 @@ set(OSL_EXTRA_ARGS
 	-DOPENEXR_IEX_LIBRARY=${LIBDIR}/ilmbase/lib/${LIBPREFIX}Iex-2_2${LIBEXT}
 	-DOPENEXR_INCLUDE_DIR=${LIBDIR}/openexr/include/
 	-DOPENEXR_ILMIMF_LIBRARY=${LIBDIR}/openexr/lib/${LIBPREFIX}IlmImf-2_2${LIBEXT}
-	-USE_SIMD=sse2  
+	-DUSE_SIMD=${OSL_SIMD} 
 	-DOSL_BUILD_TESTS=OFF 
 	-DZLIB_LIBRARY=${LIBDIR}/zlib/lib/${ZLIB_LIBRARY}
 	-DZLIB_INCLUDE_DIR=${LIBDIR}/zlib/include/
@@ -1091,6 +1157,50 @@ if ( (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/mingw64env.cmd") AND
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/mingw
     )
 endif()
+
+Message("Checking for pkg-config")
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/pkg-config-lite-0.28-1_bin-win32.zip")
+	Message("Downloading pkg-config")
+    file(DOWNLOAD "http://heanet.dl.sourceforge.net/project/pkgconfiglite/0.28-1/pkg-config-lite-0.28-1_bin-win32.zip" "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/pkg-config-lite-0.28-1_bin-win32.zip")
+endif()
+
+#extract pkgconfig
+if ( (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/pkg-config.exe") AND (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/pkg-config-lite-0.28-1_bin-win32.zip") )
+    Message("Extracting pkg-config")
+	EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} -E tar jxf "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/pkg-config-lite-0.28-1_bin-win32.zip"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+    )
+
+	EXECUTE_PROCESS(
+		COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/pkg-config-lite-0.28-1/bin/pkg-config.exe" "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/pkg-config.exe"
+    )	
+
+endif()
+
+
+
+
+Message("Checking for nasm")
+if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/nasm-2.12.01-win64.zip")
+	Message("Downloading nasm")
+    file(DOWNLOAD "http://www.nasm.us/pub/nasm/releasebuilds/2.12.01/win64/nasm-2.12.01-win64.zip" "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/nasm-2.12.01-win64.zip")
+endif()
+
+#extract nasm
+if ( (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/nasm.exe") AND (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/nasm-2.12.01-win64.zip") )
+    Message("Extracting nasm")
+	EXECUTE_PROCESS(
+        COMMAND ${CMAKE_COMMAND} -E tar jxf "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/nasm-2.12.01-win64.zip"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
+    )
+	EXECUTE_PROCESS(
+		COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/nasm-2.12.01/nasm.exe" "${CMAKE_CURRENT_SOURCE_DIR}/mingw/mingw64/bin/nasm.exe"
+    )	
+
+endif()
+
+
 
 Message("Checking for mingwGet")
 if (NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Downloads/mingw-get-0.6.2-mingw32-beta-20131004-1-bin.zip")
@@ -1400,6 +1510,11 @@ ExternalProject_Add(external_xvidcore
   INSTALL_COMMAND ${CONFIGURE_ENV} && cd ${CMAKE_CURRENT_BINARY_DIR}/build/xvidcore/src/external_xvidcore/build/generic && make install
   INSTALL_DIR ${LIBDIR}/xvidcore
 )
+ ExternalProject_Add_Step(external_xvidcore after_install
+ COMMAND ${CMAKE_COMMAND} -E rename ${LIBDIR}/xvidcore/lib/xvidcore.a  ${LIBDIR}/xvidcore/lib/libxvidcore.a
+ COMMAND ${CMAKE_COMMAND} -E remove ${LIBDIR}/xvidcore/lib/xvidcore.dll.a
+ DEPENDEES install
+  )
 
 #ffmpeg does not recognize 2.1 currently 
 set(OPENJPEG_VERSION 2.0)
@@ -1611,7 +1726,7 @@ endif(NOT WIN32 OR ENABLE_MINGW64)
 
 
 if(NOT DEFINED HARVEST_TARGET)
-set(HARVEST_TARGET ${CMAKE_CURRENT_SOURCE_DIR}\Harvest )
+set(HARVEST_TARGET ${CMAKE_CURRENT_SOURCE_DIR}/Harvest )
 endif()
 message("HARVEST_TARGET = ${HARVEST_TARGET}")
 
@@ -1675,8 +1790,8 @@ add_custom_target( Harvest_Release_Results
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/iconv/lib/libiconv.a ${HARVEST_TARGET}/iconv/lib/iconv.lib &&
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/iconv/include/iconv.h ${HARVEST_TARGET}/iconv/include/iconv.h &&
 #opencolorIO 
-								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opencolorio/ ${HARVEST_TARGET}/opencolorio &&
-								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencolorio/lib/OpenColorIO.dll ${HARVEST_TARGET}/opencolorio/bin/OpenColorIO.dll &&
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/OpenColorIO/ ${HARVEST_TARGET}/opencolorio &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/OpenColorIO/lib/OpenColorIO.dll ${HARVEST_TARGET}/opencolorio/bin/OpenColorIO.dll &&
 #Osl
 								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/osl/ ${HARVEST_TARGET}/osl &&
 #OpenVDB
@@ -1692,7 +1807,9 @@ add_custom_target( Harvest_Release_Results
 #opencollada
 								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opencollada/ ${HARVEST_TARGET}/opencollada/ &&
 #opensubdiv
-								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opensubdiv ${HARVEST_TARGET}/opensubdiv
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opensubdiv ${HARVEST_TARGET}/opensubdiv &&
+#python 
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/python/ ${HARVEST_TARGET}/python/   
 
 							DEPENDS )
 endif (BUILD_MODE STREQUAL Release)
@@ -1739,7 +1856,9 @@ add_custom_target( Harvest_Debug_Results
 #tbb
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/tbb/lib/tbb_static.lib ${HARVEST_TARGET}/tbb/lib/tbb_debug.lib &&
 #openvdb
-								${CMAKE_COMMAND} -E copy ${LIBDIR}/openvdb/lib/openvdb.lib ${HARVEST_TARGET}/openvdb/lib/openvdb_d.lib 
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/openvdb/lib/openvdb.lib ${HARVEST_TARGET}/openvdb/lib/openvdb_d.lib && 
+#python 
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/python/ ${HARVEST_TARGET}/python/   
 							
 )
 endif (BUILD_MODE STREQUAL Debug)
