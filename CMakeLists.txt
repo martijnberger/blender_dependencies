@@ -536,18 +536,17 @@ ExternalProject_Add(external_freeglut
 endif (BUILD_MODE STREQUAL Release)
 endif (WIN32)
 
-#set(HDF5_VERSION 1.8.17)
-#set(HDF5_URI http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-${HDF5_VERSION}.zip )
+set(HDF5_VERSION 1.8.17)
+set(HDF5_URI http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-${HDF5_VERSION}.zip )
+set(HDF5_HASH be2642d976b49d6cc60a32b0bd8f829a ) 
 
-set(HDF5_URI http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.0-patch1/src/hdf5-1.10.0-patch1.tar.gz )
-set(HDF5_HASH 9180ff0ef8dc2ef3f61bd37a7404f295 ) 
 set(HDF5_EXTRA_ARGS  
-	-DHDF5_ENABLE_THREADSAFE=On
+	-DHDF5_ENABLE_THREADSAFE=Off
 	-DHDF5_BUILD_CPP_LIB=Off
 	-DBUILD_TESTING=Off
 	-DHDF5_BUILD_TOOLS=Off
 	-DHDF5_BUILD_EXAMPLES=Off
-	-DHDF5_BUILD_HL_LIB=OFf
+	-DHDF5_BUILD_HL_LIB=On
 	-DBUILD_STATIC_CRT_LIBS=On
 	-DBUILD_SHARED_LIBS=On
 )
@@ -558,14 +557,22 @@ ExternalProject_Add(external_hdf5
   URL_HASH MD5=${HDF5_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/hdf5
   PATCH_COMMAND ${PATCH_CMD} --verbose -p 0 -d ${CMAKE_CURRENT_BINARY_DIR}/build/hdf5/src/external_hdf5 < ${CMAKE_CURRENT_SOURCE_DIR}/Diffs/hdf5.diff 
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/hdf5 ${DEFAULT_CMAKE_FLAGS} ${HDF5_EXTRA_ARGS}
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/hdf5 ${HDF5_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/hdf5
 )
 
-
-set(ALEMBIC_GIT_UID d28388e262d05d35318d148c48e765b47e8c1943 ) 
+set(ALEMBIC_GIT_UID eff06da3565c9ae368b07e2fe0d86114616c432f ) 
 set(ALEMBIC_URI https://github.com/alembic/alembic/archive/${ALEMBIC_GIT_UID}.zip )
-set(ALEMBIC_MD5 8277d331c9fe921c6711a82fe08a5faf ) 
+set(ALEMBIC_MD5 ca6c7f5c5b2af508cba06ea50fbd2a16 ) 
+set(ALEMBIC_HDF5_HL )
+#
+#in debug mode we do not build HDF5_hdf5_hl_LIBRARY which makes cmake really unhappy, stub it with the debug mode lib
+#it's not linking it in at this point in time anyhow 
+#
+if (BUILD_MODE STREQUAL Debug)
+	set(ALEMBIC_HDF5_HL -DHDF5_hdf5_hl_LIBRARY=${LIBDIR}/hdf5/lib/libhdf5_hl_D.${LIBEXT} )
+endif (BUILD_MODE STREQUAL Debug)
+
 set(ALEMBIC_EXTRA_ARGS  
  -DBUILDSTATIC=ON 
  -DLINKSTATIC=ON 
@@ -586,16 +593,17 @@ set(ALEMBIC_EXTRA_ARGS
  -DUSE_MAYA=0
  -DUSE_PRMAN=0
  -DUSE_HDF5=On
- -DUSE_STATIC_HDF5=Off
+ -DUSE_STATIC_HDF5=On
  -DHDF5_ROOT=${LIBDIR}/hdf5
  -DUSE_TESTS=Off
  -DALEMBIC_NO_OPENGL=1 
- -DUSE_BINARIES=On
+ -DUSE_BINARIES=Off
  -DALEMBIC_ILMBASE_LINK_STATIC=On
  -DALEMBIC_SHARED_LIBS=OFF 
  -DGLUT_INCLUDE_DIR="" 
  -DZLIB_LIBRARY=${LIBDIR}/zlib/lib/${ZLIB_LIBRARY}
  -DZLIB_INCLUDE_DIR=${LIBDIR}/zlib/include/
+ ${ALEMBIC_HDF5_HL}
  )
 
 ExternalProject_Add(external_alembic
@@ -603,7 +611,6 @@ ExternalProject_Add(external_alembic
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
   URL_HASH MD5=${ALEMBIC_MD5}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/alembic
-  PATCH_COMMAND ${PATCH_CMD} --verbose -p 1 -N -d ${CMAKE_CURRENT_BINARY_DIR}/build/alembic/src/external_alembic < ${CMAKE_CURRENT_SOURCE_DIR}/Diffs/alembic.diff 
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/alembic -Wno-dev ${DEFAULT_CMAKE_FLAGS} ${ALEMBIC_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/alembic
 )
@@ -1734,7 +1741,7 @@ if(WIN32)
 
 if (BUILD_MODE STREQUAL Release)
 add_custom_target( Harvest_Release_Results  
-	#Zlib Rename the lib file and copy the include/bin folders
+#Zlib Rename the lib file and copy the include/bin folders
                         COMMAND ${CMAKE_COMMAND} -E copy ${LIBDIR}/zlib/lib/zlibstatic.lib ${HARVEST_TARGET}/zlib/lib/libz_st.lib &&
 							    ${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/zlib/include/ ${HARVEST_TARGET}/zlib/include/ &&
 								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/zlib/bin/ ${HARVEST_TARGET}/zlib/bin/ &&
@@ -1809,7 +1816,11 @@ add_custom_target( Harvest_Release_Results
 #opensubdiv
 								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/opensubdiv ${HARVEST_TARGET}/opensubdiv &&
 #python 
-								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/python/ ${HARVEST_TARGET}/python/   
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/python/ ${HARVEST_TARGET}/python/ &&  
+#alembic
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/alembic ${HARVEST_TARGET}/alembic &&  
+#hdf5
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/hdf5 ${HARVEST_TARGET}/hdf5 
 
 							DEPENDS )
 endif (BUILD_MODE STREQUAL Release)
@@ -1858,7 +1869,12 @@ add_custom_target( Harvest_Debug_Results
 #openvdb
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/openvdb/lib/openvdb.lib ${HARVEST_TARGET}/openvdb/lib/openvdb_d.lib && 
 #python 
-								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/python/ ${HARVEST_TARGET}/python/   
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/python/ ${HARVEST_TARGET}/python/ &&  
+#alembic
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/alembic/lib/alembic.lib ${HARVEST_TARGET}/alembic/lib/alembic_d.lib &&  
+#hdf5
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/hdf5/lib ${HARVEST_TARGET}/hdf5/lib 
+							
 							
 )
 endif (BUILD_MODE STREQUAL Debug)
