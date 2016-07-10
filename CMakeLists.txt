@@ -1651,7 +1651,7 @@ set(FFTW_HASH 2edab8c06b24feeb3b82bbb3ebf3e7b3)
 set(FFTW_EXTRA_ARGS  )
 
 if(WIN32)
-	set(FFTW3_ENV set CFLAGS=-fno-stack-check -fno-stack-protector -mno-stack-arg-probe &&)
+	set(FFTW3_ENV set CFLAGS=-fno-stack-check -fno-stack-protector -mno-stack-arg-probe -fno-lto &&)
 	set(FFTW3_PATCH_COMMAND ${PATCH_CMD} --verbose -p 0 -N -d ${CMAKE_CURRENT_BINARY_DIR}/build/fftw3/src/external_fftw3 < ${CMAKE_CURRENT_SOURCE_DIR}/Diffs/fftw3.diff)
 endif()
 
