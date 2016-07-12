@@ -1028,9 +1028,9 @@ ExternalProject_Add(external_flexbison
 
 
 
-set(OSL_VERSION 1.7.2)
+set(OSL_VERSION 1.7.3)
 set(OSL_URI https://github.com/imageworks/OpenShadingLanguage/archive/Release-${OSL_VERSION}.zip)
-set(OSL_HASH f18c2ca1eb98e2c27e7d6c8c1e8b4053)
+set(OSL_HASH 5967245f664e43ef1ef1671f5ec32b25)
 set(OSL_SIMD sse2)
 if(WIN32)
 	set(OSL_CMAKE_CXX_STANDARD_LIBRARIES "kernel32${LIBEXT} user32${LIBEXT} gdi32${LIBEXT} winspool${LIBEXT} shell32${LIBEXT} ole32${LIBEXT} oleaut32${LIBEXT} uuid${LIBEXT} comdlg32${LIBEXT} advapi32${LIBEXT} psapi${LIBEXT}")
