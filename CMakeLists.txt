@@ -382,21 +382,78 @@ ExternalProject_Add(external_python
 						  ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/include ${LIBDIR}/python/include 
 )
 
+if (MSVC)
+	if (BUILD_MODE STREQUAL Release)
+		add_custom_target( Package_Python_Release
+								#${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/lib ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib  &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/python.exe" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/bin/python.exe  && 
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/pyexpat.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/pyexpat.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/select.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/select.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/unicodedata.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/unicodedata.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/winsound.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/winsound.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_ctypes.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_ctypes.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_ctypes_test.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_ctypes_test.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_decimal.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_decimal.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_elementtree.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_elementtree.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_msi.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_msi.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_multiprocessing.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_multiprocessing.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_overlapped.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_overlapped.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_socket.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_socket.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_testbuffer.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_testbuffer.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_testcapi.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_testcapi.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_testimportmultiple.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_testimportmultiple.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_testmultiphase.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_testmultiphase.pyd &&
+ 								${CMAKE_COMMAND} -E chdir "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist" 
+								${CMAKE_COMMAND} -E tar "cfvz" "${LIBDIR}/python35.tar.gz" "."
+						 )
+		add_dependencies(Package_Python_Release external_python)
+	endif (BUILD_MODE STREQUAL Release)
+	if (BUILD_MODE STREQUAL Debug)
+		add_custom_target( Package_Python_Debug
+								#${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/lib ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib  &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/python_d.exe" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/bin/python_d.exe  && 
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/pyexpat_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/pyexpat_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/select_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/select_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/unicodedata_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/unicodedata_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/winsound_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/winsound_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_ctypes_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_ctypes_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_ctypes_test_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_ctypes_test_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_decimal_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_decimal_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_elementtree_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_elementtree_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_msi_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_msi_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_multiprocessing_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_multiprocessing_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_overlapped_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_overlapped_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_socket_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_socket_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_testbuffer_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_testbuffer_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_testcapi_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_testcapi_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_testimportmultiple_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_testimportmultiple_d.pyd &&
+								${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/pcbuild/amd64/_testmultiphase_d.pyd" ${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist/lib/_testmultiphase_d.pyd &&
+ 								${CMAKE_COMMAND} -E chdir "${CMAKE_CURRENT_BINARY_DIR}/build/python/src/external_python/redist" 
+								${CMAKE_COMMAND} -E tar "cfvz" "${LIBDIR}/python35_d.tar.gz" "."
+						 )
+		add_dependencies(Package_Python_Debug external_python)
+	endif (BUILD_MODE STREQUAL Debug)
+endif()
+
+
+
+
+
 if (BUILD_MODE STREQUAL Release)
 set(BLOSC_VERSION 1.7.1)
 set(BLOSC_URI https://github.com/Blosc/c-blosc/archive/v${BLOSC_VERSION}.zip)
-#set(BLOSC_HASH f9804884c1c41eb7f4febb9353a2cb27)
+set(BLOSC_HASH ff5cc729a5a25934ef714217218eed26)
 set(BLOSC_EXTRA_ARGS -DZLIB_INCLUDE_DIR=${LIBDIR}/zlib/include/
                      -DZLIB_LIBRARY=${LIBDIR}/zlib/lib/${ZLIB_LIBRARY}
                      -DBUILD_TESTS=OFF
-                     -DBUILD_BENCHMARKS=OFF
-                     -DCMAKE_DEBUG_POSTFIX=_d
+                     -DBUILD_BENCHMARKS=OFF 
+                     -DCMAKE_DEBUG_POSTFIX=_d 
 )
 
 ExternalProject_Add(external_blosc
   URL ${BLOSC_URI}
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
-  LIST_SEPARATOR ^^
+  URL_HASH MD5=${BLOSC_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/blosc
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/blosc ${DEFAULT_CMAKE_FLAGS} ${BLOSC_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/blosc
@@ -971,9 +1028,9 @@ ExternalProject_Add(external_flexbison
 
 
 
-set(OSL_VERSION 1.7.2)
+set(OSL_VERSION 1.7.3)
 set(OSL_URI https://github.com/imageworks/OpenShadingLanguage/archive/Release-${OSL_VERSION}.zip)
-set(OSL_HASH f18c2ca1eb98e2c27e7d6c8c1e8b4053)
+set(OSL_HASH 5967245f664e43ef1ef1671f5ec32b25)
 set(OSL_SIMD sse2)
 if(WIN32)
 	set(OSL_CMAKE_CXX_STANDARD_LIBRARIES "kernel32${LIBEXT} user32${LIBEXT} gdi32${LIBEXT} winspool${LIBEXT} shell32${LIBEXT} ole32${LIBEXT} oleaut32${LIBEXT} uuid${LIBEXT} comdlg32${LIBEXT} advapi32${LIBEXT} psapi${LIBEXT}")
@@ -1651,7 +1708,7 @@ set(FFTW_HASH 2edab8c06b24feeb3b82bbb3ebf3e7b3)
 set(FFTW_EXTRA_ARGS  )
 
 if(WIN32)
-	set(FFTW3_ENV set CFLAGS=-fno-stack-check -fno-stack-protector -mno-stack-arg-probe &&)
+	set(FFTW3_ENV set CFLAGS=-fno-stack-check -fno-stack-protector -mno-stack-arg-probe -fno-lto &&)
 	set(FFTW3_PATCH_COMMAND ${PATCH_CMD} --verbose -p 0 -N -d ${CMAKE_CURRENT_BINARY_DIR}/build/fftw3/src/external_fftw3 < ${CMAKE_CURRENT_SOURCE_DIR}/Diffs/fftw3.diff)
 endif()
 
@@ -1820,8 +1877,9 @@ add_custom_target( Harvest_Release_Results
 #alembic
 								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/alembic ${HARVEST_TARGET}/alembic &&  
 #hdf5
-								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/hdf5 ${HARVEST_TARGET}/hdf5 
-
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/hdf5 ${HARVEST_TARGET}/hdf5 &&
+#python
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/python35.tar.gz ${HARVEST_TARGET}/Release/python35.tar.gz  
 							DEPENDS )
 endif (BUILD_MODE STREQUAL Release)
 
@@ -1838,7 +1896,7 @@ add_custom_target( Harvest_Debug_Results
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/ilmbase/lib/IlmThread-2_2.lib ${HARVEST_TARGET}/openexr/lib/IlmThread-2_2_d.lib &&
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/ilmbase/lib/Imath-2_2.lib ${HARVEST_TARGET}/openexr/lib/Imath-2_2_d.lib && 
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/openexr/lib/IlmImf-2_2.lib ${HARVEST_TARGET}/openexr/lib/IlmImf-2_2_d.lib &&
-								${CMAKE_COMMAND} -E copy ${LIBDIR}/openexr/lib/IlmImfUtil-2_2.lib ${HARVEST_TARGET}/openexr/lib/IlmImfUtil-2_2_d.lib.lib  &&
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/openexr/lib/IlmImfUtil-2_2.lib ${HARVEST_TARGET}/openexr/lib/IlmImfUtil-2_2_d.lib  &&
 #opencollada
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencollada/lib/opencollada/buffer.lib  ${HARVEST_TARGET}/opencollada/lib/opencollada/buffer_d.lib &&
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/opencollada/lib/opencollada/ftoa.lib ${HARVEST_TARGET}/opencollada/lib/opencollada/ftoa_d.lib &&
@@ -1873,9 +1931,9 @@ add_custom_target( Harvest_Debug_Results
 #alembic
 								${CMAKE_COMMAND} -E copy ${LIBDIR}/alembic/lib/alembic.lib ${HARVEST_TARGET}/alembic/lib/alembic_d.lib &&  
 #hdf5
-								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/hdf5/lib ${HARVEST_TARGET}/hdf5/lib 
-							
-							
+								${CMAKE_COMMAND} -E copy_directory ${LIBDIR}/hdf5/lib ${HARVEST_TARGET}/hdf5/lib &&
+#python
+								${CMAKE_COMMAND} -E copy ${LIBDIR}/python35_d.tar.gz ${HARVEST_TARGET}/Release/python35_d.tar.gz   
 )
 endif (BUILD_MODE STREQUAL Debug)
 
