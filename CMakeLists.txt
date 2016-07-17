@@ -442,18 +442,18 @@ endif()
 if (BUILD_MODE STREQUAL Release)
 set(BLOSC_VERSION 1.7.1)
 set(BLOSC_URI https://github.com/Blosc/c-blosc/archive/v${BLOSC_VERSION}.zip)
-#set(BLOSC_HASH f9804884c1c41eb7f4febb9353a2cb27)
+set(BLOSC_HASH ff5cc729a5a25934ef714217218eed26)
 set(BLOSC_EXTRA_ARGS -DZLIB_INCLUDE_DIR=${LIBDIR}/zlib/include/
                      -DZLIB_LIBRARY=${LIBDIR}/zlib/lib/${ZLIB_LIBRARY}
                      -DBUILD_TESTS=OFF
-                     -DBUILD_BENCHMARKS=OFF
-                     -DCMAKE_DEBUG_POSTFIX=_d
+                     -DBUILD_BENCHMARKS=OFF 
+                     -DCMAKE_DEBUG_POSTFIX=_d 
 )
 
 ExternalProject_Add(external_blosc
   URL ${BLOSC_URI}
   DOWNLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR}/Downloads
-  LIST_SEPARATOR ^^
+  URL_HASH MD5=${BLOSC_HASH}
   PREFIX ${CMAKE_CURRENT_BINARY_DIR}/build/blosc
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${LIBDIR}/blosc ${DEFAULT_CMAKE_FLAGS} ${BLOSC_EXTRA_ARGS}
   INSTALL_DIR ${LIBDIR}/blosc
